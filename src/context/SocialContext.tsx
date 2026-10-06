@@ -59,7 +59,7 @@ interface SocialContextType {
   toggleSavePost: (postId: string) => void;
   addComment: (postId: string, content: string) => void;
   deleteComment: (postId: string, commentId: string) => void;
-  createPost: (caption: string, mediaUrl: string, location?: string, hashtags?: string[], mediaType?: 'image' | 'video') => void;
+  createPost: (caption: string, mediaUrl: string, location?: string, hashtags?: string[], mediaType?: 'image' | 'video', isSubscriberOnly?: boolean) => void;
   deletePost: (postId: string) => void;
 
   // Follow System
@@ -76,7 +76,7 @@ interface SocialContextType {
 
   // Reels
   reels: Reel[];
-  createReel: (videoUrl: string, caption: string, musicTitle?: string) => void;
+  createReel: (videoUrl: string, caption: string, musicTitle?: string, isSubscriberOnly?: boolean) => void;
   toggleLikeReel: (reelId: string) => void;
   toggleSaveReel: (reelId: string) => void;
 
@@ -99,6 +99,14 @@ interface SocialContextType {
   setIsCreateModalOpen: (open: boolean) => void;
   isDownloadModalOpen: boolean;
   setIsDownloadModalOpen: (open: boolean) => void;
+  isSubscriptionModalOpen: boolean;
+  setIsSubscriptionModalOpen: (open: boolean) => void;
+
+  // Business & Subscription (Paywall)
+  isSubscribed: boolean;
+  subscribeUser: (plan: 'monthly' | 'annual') => void;
+  cancelSubscription: () => void;
+  checkAccess: (isSubscriberOnly?: boolean) => boolean;
 
   // Admin & Moderation
   reports: ReportItem[];
@@ -211,6 +219,29 @@ export const SocialProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Modal
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
+  const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
+
+  // Subscription state
+  const isSubscribed =
+    currentUser.subscriptionStatus === 'SUBSCRIBER_MONTHLY' ||
+    currentUser.subscriptionStatus === 'SUBSCRIBER_ANNUAL';
+
+  const subscribeUser = (plan: 'monthly' | 'annual') => {
+    const status = plan === 'annual' ? 'SUBSCRIBER_ANNUAL' : 'SUBSCRIBER_MONTHLY';
+    updateCurrentUserProfile({ subscriptionStatus: status });
+    setIsSubscriptionModalOpen(false);
+  };
+
+  const cancelSubscription = () => {
+    updateCurrentUserProfile({ subscriptionStatus: 'FREE' });
+  };
+
+  const checkAccess = (isSubscriberOnly?: boolean) => {
+    if (!isSubscriberOnly) return true;
+    if (isSubscribed) return true;
+    setIsSubscriptionModalOpen(true);
+    return false;
+  };
 
   // Sync state to local storage
   useEffect(() => {
@@ -477,7 +508,8 @@ export const SocialProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     mediaUrl: string,
     location?: string,
     hashtags: string[] = [],
-    mediaType: 'image' | 'video' = 'image'
+    mediaType: 'image' | 'video' = 'image',
+    isSubscriberOnly = false
   ) => {
     const extractedTags = hashtags.length > 0
       ? hashtags
@@ -499,6 +531,7 @@ export const SocialProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           id: `media_${Date.now()}`,
           url: mediaUrl,
           type: mediaType,
+          isSubscriberOnly,
           aspectRatio: mediaType === 'video' ? '16:9' : '1:1',
         },
       ],
@@ -511,6 +544,7 @@ export const SocialProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       createdAt: 'Just now',
       isLiked: false,
       isSaved: false,
+      isSubscriberOnly,
       comments: [],
     };
 
@@ -524,7 +558,7 @@ export const SocialProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setIsCreateModalOpen(false);
   };
 
-  const createReel = (videoUrl: string, caption: string, musicTitle?: string) => {
+  const createReel = (videoUrl: string, caption: string, musicTitle?: string, isSubscriberOnly = false) => {
     const newReel: Reel = {
       id: `reel_${Date.now()}`,
       userId: currentUser.id,
@@ -539,6 +573,7 @@ export const SocialProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       viewsCount: 1,
       isLiked: false,
       isSaved: false,
+      isSubscriberOnly,
       createdAt: 'Just now',
     };
 
@@ -832,6 +867,12 @@ export const SocialProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setIsCreateModalOpen,
         isDownloadModalOpen,
         setIsDownloadModalOpen,
+        isSubscriptionModalOpen,
+        setIsSubscriptionModalOpen,
+        isSubscribed,
+        subscribeUser,
+        cancelSubscription,
+        checkAccess,
         reports,
         submitReport,
         resolveReport,

@@ -15,6 +15,7 @@ export interface User {
   followingCount: number;
   postsCount: number;
   status: 'ACTIVE' | 'SUSPENDED' | 'BANNED';
+  subscriptionStatus?: 'FREE' | 'SUBSCRIBER_MONTHLY' | 'SUBSCRIBER_ANNUAL';
   createdAt: string;
   category?: string; // e.g., "Digital Creator", "Fashion & Lifestyle", "Technology Company"
 }
@@ -25,6 +26,7 @@ export interface PostMedia {
   type: 'image' | 'video';
   thumbnailUrl?: string;
   duration?: number;
+  isSubscriberOnly?: boolean;
   aspectRatio?: '1:1' | '4:3' | '16:9' | '9:16';
 }
 
@@ -64,6 +66,7 @@ export interface Post {
   comments: Comment[];
   isSponsored?: boolean;
   sponsoredBrand?: string;
+  isSubscriberOnly?: boolean;
 }
 
 export interface Story {
@@ -93,7 +96,18 @@ export interface Reel {
   viewsCount: number;
   isLiked: boolean;
   isSaved: boolean;
+  isSubscriberOnly?: boolean;
   createdAt: string;
+}
+
+export interface SubscriptionPlan {
+  id: 'free' | 'monthly' | 'annual';
+  name: string;
+  price: string;
+  period: string;
+  tagline: string;
+  features: string[];
+  isPopular?: boolean;
 }
 
 export interface Message {
