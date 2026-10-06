@@ -1,0 +1,6 @@
+{
+  "name": "MIZIZI SOCIAL",
+  "description": "Modern visual social media and creator platform for photo & video sharing, messaging, stories, and discovery.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
