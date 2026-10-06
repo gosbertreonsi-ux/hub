@@ -47,7 +47,7 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 flex flex-col md:flex-row transition-colors duration-200">
+    <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col md:flex-row transition-colors duration-200 selection:bg-white selection:text-black">
       {/* Desktop Left Navigation Sidebar */}
       <Sidebar />
 

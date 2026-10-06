@@ -251,14 +251,14 @@ export const StoriesViewerModal: React.FC = () => {
               placeholder={`Reply to ${currentStory.username}...`}
               value={replyText}
               onChange={e => setReplyText(e.target.value)}
-              className="flex-1 bg-black/50 backdrop-blur-md border border-white/20 rounded-full px-4 py-2 text-xs text-white placeholder:text-white/60 focus:outline-none focus:border-amber-400"
+              className="flex-1 bg-black/50 backdrop-blur-md border border-white/20 rounded-full px-4 py-2 text-xs text-white placeholder:text-white/60 focus:outline-none focus:border-white"
             />
             <button
               type="submit"
               disabled={!replyText.trim()}
-              className="p-2 rounded-full bg-amber-500 text-neutral-950 font-bold hover:bg-amber-400 transition-colors disabled:opacity-40"
+              className="p-2.5 rounded-full bg-white text-black font-bold hover:bg-neutral-200 transition-colors disabled:opacity-40"
             >
-              <Send className="w-4 h-4" />
+              <Send className="w-4 h-4 stroke-[2.5]" />
             </button>
           </form>
         </div>

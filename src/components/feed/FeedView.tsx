@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Heart,
   MessageCircle,
@@ -6,13 +6,20 @@ import {
   Bookmark,
   MoreHorizontal,
   Plus,
-  Smile,
-  CheckCircle2,
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
   Share2,
   Trash2,
   Flag,
+  Film,
+  Compass,
+  ArrowRight,
+  TrendingUp,
+  ShieldCheck,
+  CheckCircle2,
   Sparkles,
-  Volume2,
 } from 'lucide-react';
 import { useSocial } from '../../context/SocialContext';
 import { Post } from '../../types';
@@ -34,6 +41,7 @@ export const FeedView: React.FC = () => {
     setActiveStoryIndex,
     openUserProfile,
     startDirectMessage,
+    setIsCreateModalOpen,
     setCurrentView,
   } = useSocial();
 
@@ -43,18 +51,22 @@ export const FeedView: React.FC = () => {
   const [showHeartAnim, setShowHeartAnim] = useState<string | null>(null);
   const [shareToast, setShareToast] = useState<string | null>(null);
 
+  // Video playback states
+  const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
+  const [mutedVideos, setMutedVideos] = useState<Record<string, boolean>>({});
+
   // Filter posts based on feedMode
   const displayedPosts = posts.filter(post => {
     if (feedMode === 'following') {
       return followingUserIds.includes(post.author.id) || post.author.id === currentUser.id;
     }
-    return true; // discover mode shows all
+    return true;
   });
 
-  // Suggested users to follow (excluding current user and already followed)
+  // Suggested users
   const suggestedUsers = allUsers.filter(
     u => u.id !== currentUser.id && !followingUserIds.includes(u.id)
-  ).slice(0, 5);
+  ).slice(0, 4);
 
   const handleCommentSubmit = (postId: string, e: React.FormEvent) => {
     e.preventDefault();
@@ -82,40 +94,94 @@ export const FeedView: React.FC = () => {
   const handleReport = (post: Post) => {
     submitReport('post', post.id, 'spam', `Reported post by @${post.author.username}`, post.author.username);
     setActiveMenuPostId(null);
-    setShareToast('Thank you. Post submitted for safety review.');
+    setShareToast('Post submitted for safety review.');
     setTimeout(() => setShareToast(null), 3000);
   };
 
+  const toggleVideoPlayback = (postId: string, videoEl: HTMLVideoElement | null) => {
+    if (!videoEl) return;
+    if (videoEl.paused) {
+      videoEl.play();
+      setPlayingVideoId(postId);
+    } else {
+      videoEl.pause();
+      setPlayingVideoId(null);
+    }
+  };
+
+  const toggleVideoMute = (postId: string, videoEl: HTMLVideoElement | null) => {
+    if (!videoEl) return;
+    const nextMuted = !videoEl.muted;
+    videoEl.muted = nextMuted;
+    setMutedVideos(prev => ({ ...prev, [postId]: nextMuted }));
+  };
+
   return (
-    <div className="max-w-6xl mx-auto px-2 sm:px-4 py-4 md:py-6 flex gap-8 justify-center">
+    <div className="max-w-6xl mx-auto px-2 sm:px-4 py-4 md:py-6 flex gap-8 justify-center select-none">
       {/* Toast Alert */}
       {shareToast && (
-        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl bg-neutral-900 text-white text-xs font-medium shadow-xl border border-neutral-700 animate-in fade-in slide-in-from-top-3">
-          {shareToast}
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-full bg-white text-black text-xs font-bold shadow-2xl border border-white/20 animate-in fade-in slide-in-from-top-3 flex items-center gap-2">
+          <span>{shareToast}</span>
         </div>
       )}
 
-      {/* Main Center Column (Stories + Posts Feed) */}
-      <div className="w-full max-w-[620px] space-y-6">
+      {/* Main Center Stream */}
+      <div className="w-full max-w-[620px] space-y-5">
+        {/* Sleek Top Stepper / Filter Bar inspired by oneImage.webp */}
+        <div className="p-4 sm:p-5 rounded-[28px] bg-[#121212] border border-white/10 flex items-center justify-between shadow-xl">
+          <div className="flex items-center gap-3">
+            <h1 className="font-display font-extrabold text-2xl text-white tracking-tight">
+              Overview
+            </h1>
+            <span className="text-sm font-semibold text-neutral-500">
+              · Feed
+            </span>
+          </div>
+
+          {/* Stepper / Mode Toggle (Buttons matching reference screenshot) */}
+          <div className="flex items-center gap-1.5 p-1 bg-[#1c1c1c] rounded-full border border-white/10">
+            <button
+              onClick={() => setFeedMode('discover')}
+              className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
+                feedMode === 'discover'
+                  ? 'bg-white text-black shadow-md'
+                  : 'text-neutral-400 hover:text-white'
+              }`}
+            >
+              For You
+            </button>
+            <button
+              onClick={() => setFeedMode('following')}
+              className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
+                feedMode === 'following'
+                  ? 'bg-white text-black shadow-md'
+                  : 'text-neutral-400 hover:text-white'
+              }`}
+            >
+              Following ({followingUserIds.length})
+            </button>
+          </div>
+        </div>
+
         {/* Stories Tray */}
-        <div className="p-3.5 rounded-2xl bg-white dark:bg-neutral-900/70 border border-neutral-200/80 dark:border-neutral-800/80 shadow-xs">
+        <div className="p-4 rounded-[28px] bg-[#121212] border border-white/10 shadow-xl">
           <div className="flex items-center gap-4 overflow-x-auto no-scrollbar py-1">
             {/* Add Story Button */}
             <button
               onClick={() => setActiveStoryIndex(0)}
-              className="flex flex-col items-center gap-1.5 shrink-0 group focus:outline-none"
+              className="flex flex-col items-center gap-2 shrink-0 group focus:outline-none"
             >
               <div className="relative">
                 <img
                   src={currentUser.avatarUrl}
                   alt={currentUser.displayName}
-                  className="w-16 h-16 rounded-full object-cover p-0.5 border-2 border-dashed border-amber-500/60 group-hover:border-amber-500 transition-colors"
+                  className="w-16 h-16 rounded-full object-cover p-0.5 border-2 border-dashed border-white/40 group-hover:border-white transition-colors"
                 />
-                <span className="absolute bottom-0 right-0 w-5 h-5 rounded-full bg-amber-500 text-neutral-950 flex items-center justify-center text-xs font-bold ring-2 ring-white dark:ring-neutral-900">
+                <span className="absolute bottom-0 right-0 w-5 h-5 rounded-full bg-white text-black flex items-center justify-center text-xs font-black shadow-lg">
                   <Plus className="w-3.5 h-3.5" />
                 </span>
               </div>
-              <span className="text-[11px] font-medium text-neutral-600 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-neutral-200 truncate max-w-[64px]">
+              <span className="text-[11px] font-semibold text-neutral-400 group-hover:text-white truncate max-w-[64px]">
                 Your Story
               </span>
             </button>
@@ -125,22 +191,22 @@ export const FeedView: React.FC = () => {
               <button
                 key={story.id}
                 onClick={() => setActiveStoryIndex(idx)}
-                className="flex flex-col items-center gap-1.5 shrink-0 group focus:outline-none"
+                className="flex flex-col items-center gap-2 shrink-0 group focus:outline-none"
               >
                 <div
                   className={`p-0.5 rounded-full transition-transform group-hover:scale-105 ${
                     story.isViewed
-                      ? 'bg-neutral-300 dark:bg-neutral-700'
-                      : 'bg-gradient-to-tr from-amber-500 via-rose-500 to-amber-300'
+                      ? 'bg-neutral-700'
+                      : 'bg-gradient-to-tr from-white via-neutral-300 to-neutral-500'
                   }`}
                 >
                   <img
                     src={story.userAvatar}
                     alt={story.username}
-                    className="w-15 h-15 rounded-full object-cover ring-2 ring-white dark:ring-neutral-900"
+                    className="w-15 h-15 rounded-full object-cover ring-2 ring-black"
                   />
                 </div>
-                <span className="text-[11px] font-medium text-neutral-600 dark:text-neutral-400 group-hover:text-neutral-900 dark:group-hover:text-neutral-200 truncate max-w-[64px]">
+                <span className="text-[11px] font-semibold text-neutral-400 group-hover:text-white truncate max-w-[64px]">
                   {story.username.split('_')[0]}
                 </span>
               </button>
@@ -148,116 +214,142 @@ export const FeedView: React.FC = () => {
           </div>
         </div>
 
-        {/* Feed Mode Segmented Control (Interactive Button Tabs as permitted by Constitution) */}
-        <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-800 pb-3 px-1">
-          <div className="flex items-center gap-1 p-1 bg-neutral-100 dark:bg-neutral-900 rounded-xl">
-            <button
-              onClick={() => setFeedMode('discover')}
-              className={`px-4 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap ${
-                feedMode === 'discover'
-                  ? 'bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 shadow-xs'
-                  : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200'
-              }`}
-            >
-              For You
-            </button>
-            <button
-              onClick={() => setFeedMode('following')}
-              className={`px-4 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap ${
-                feedMode === 'following'
-                  ? 'bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 shadow-xs'
-                  : 'text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-200'
-              }`}
-            >
-              Following ({followingUserIds.length})
-            </button>
-          </div>
+        {/* Quick Squircle Action Grid (Directly mirroring the 6 tiles in oneImage.webp) */}
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2.5 p-3 rounded-[24px] bg-[#121212] border border-white/10">
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="p-3 rounded-2xl bg-[#1c1c1c] hover:bg-[#262626] border border-white/5 flex flex-col items-center justify-center gap-1.5 transition-colors group"
+          >
+            <div className="w-9 h-9 rounded-xl bg-white text-black flex items-center justify-center group-hover:scale-105 transition-transform shadow-md">
+              <Plus className="w-5 h-5 stroke-[2.5]" />
+            </div>
+            <span className="text-[11px] font-bold text-neutral-300 group-hover:text-white">Create</span>
+          </button>
 
-          <span className="text-xs text-neutral-400">
-            {displayedPosts.length} posts
-          </span>
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="p-3 rounded-2xl bg-[#1c1c1c] hover:bg-[#262626] border border-white/5 flex flex-col items-center justify-center gap-1.5 transition-colors group"
+          >
+            <div className="w-9 h-9 rounded-xl bg-[#2a2a2a] text-white flex items-center justify-center group-hover:scale-105 transition-transform">
+              <Film className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-[11px] font-bold text-neutral-300 group-hover:text-white">Upload Video</span>
+          </button>
+
+          <button
+            onClick={() => setCurrentView('reels')}
+            className="p-3 rounded-2xl bg-[#1c1c1c] hover:bg-[#262626] border border-white/5 flex flex-col items-center justify-center gap-1.5 transition-colors group"
+          >
+            <div className="w-9 h-9 rounded-xl bg-[#2a2a2a] text-white flex items-center justify-center group-hover:scale-105 transition-transform">
+              <TrendingUp className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-[11px] font-bold text-neutral-300 group-hover:text-white">Reels</span>
+          </button>
+
+          <button
+            onClick={() => setCurrentView('explore')}
+            className="p-3 rounded-2xl bg-[#1c1c1c] hover:bg-[#262626] border border-white/5 flex flex-col items-center justify-center gap-1.5 transition-colors group"
+          >
+            <div className="w-9 h-9 rounded-xl bg-[#2a2a2a] text-white flex items-center justify-center group-hover:scale-105 transition-transform">
+              <Compass className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-[11px] font-bold text-neutral-300 group-hover:text-white">Discover</span>
+          </button>
+
+          <button
+            onClick={() => setCurrentView('creator')}
+            className="p-3 rounded-2xl bg-[#1c1c1c] hover:bg-[#262626] border border-white/5 flex flex-col items-center justify-center gap-1.5 transition-colors group"
+          >
+            <div className="w-9 h-9 rounded-xl bg-[#2a2a2a] text-white flex items-center justify-center group-hover:scale-105 transition-transform">
+              <Sparkles className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-[11px] font-bold text-neutral-300 group-hover:text-white">Creator</span>
+          </button>
+
+          <button
+            onClick={() => setCurrentView('admin')}
+            className="p-3 rounded-2xl bg-[#1c1c1c] hover:bg-[#262626] border border-white/5 flex flex-col items-center justify-center gap-1.5 transition-colors group"
+          >
+            <div className="w-9 h-9 rounded-xl bg-[#2a2a2a] text-white flex items-center justify-center group-hover:scale-105 transition-transform">
+              <ShieldCheck className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-[11px] font-bold text-neutral-300 group-hover:text-white">Safety</span>
+          </button>
         </div>
-
-        {/* Empty state */}
-        {displayedPosts.length === 0 && (
-          <div className="p-12 text-center rounded-2xl bg-white dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800">
-            <p className="text-neutral-500 text-sm">No posts to display in this feed yet.</p>
-            <button
-              onClick={() => setFeedMode('discover')}
-              className="mt-3 px-4 py-2 rounded-xl bg-amber-500 text-neutral-950 font-semibold text-xs hover:bg-amber-400 transition-colors"
-            >
-              Switch to For You
-            </button>
-          </div>
-        )}
 
         {/* Posts Stream */}
         <div className="space-y-6">
           {displayedPosts.map(post => {
             const isAuthor = post.author.id === currentUser.id;
+            const isVideo = post.media[0]?.type === 'video';
+            const isCurrentPlaying = playingVideoId === post.id;
+            const isMuted = mutedVideos[post.id] ?? true;
+
             return (
               <article
                 key={post.id}
-                className="rounded-2xl bg-white dark:bg-neutral-900/80 border border-neutral-200/90 dark:border-neutral-800/80 shadow-xs overflow-hidden transition-colors"
+                className="rounded-[32px] bg-[#121212] border border-white/10 shadow-2xl overflow-hidden transition-all text-white"
               >
                 {/* Post Header */}
-                <header className="p-3.5 flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800/50">
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => openUserProfile(post.author.id)}
-                      className="group flex items-center gap-3 text-left focus:outline-none"
-                    >
-                      <img
-                        src={post.author.avatarUrl}
-                        alt={post.author.displayName}
-                        className="w-10 h-10 rounded-full object-cover ring-1 ring-neutral-200 dark:ring-neutral-700 group-hover:opacity-90"
-                      />
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs font-bold text-neutral-900 dark:text-neutral-100 group-hover:underline">
-                            {post.author.displayName}
+                <header className="p-4 flex items-center justify-between border-b border-white/5">
+                  <button
+                    onClick={() => openUserProfile(post.author.id)}
+                    className="flex items-center gap-3 text-left focus:outline-none"
+                  >
+                    <img
+                      src={post.author.avatarUrl}
+                      alt={post.author.displayName}
+                      className="w-10 h-10 rounded-full object-cover ring-2 ring-white/10"
+                    />
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-bold text-white hover:underline">
+                          {post.author.displayName}
+                        </span>
+                        {post.author.isVerified && (
+                          <CheckCircle2 className="w-3.5 h-3.5 text-white fill-white text-black shrink-0" />
+                        )}
+                        {isVideo && (
+                          <span className="px-2 py-0.5 rounded-full bg-white/10 text-[9px] font-bold uppercase tracking-wider text-neutral-300">
+                            Video
                           </span>
-                          {post.author.isVerified && (
-                            <CheckCircle2 className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                          )}
-                        </div>
-                        <div className="flex items-center gap-1.5 text-[11px] text-neutral-500">
-                          <span>@{post.author.username}</span>
-                          {post.location && (
-                            <>
-                              <span aria-hidden="true">·</span>
-                              <span className="truncate max-w-[150px]">{post.location}</span>
-                            </>
-                          )}
-                          <span aria-hidden="true">·</span>
-                          <span>{post.createdAt}</span>
-                        </div>
+                        )}
                       </div>
-                    </button>
-                  </div>
+                      <div className="flex items-center gap-1.5 text-[11px] text-neutral-400">
+                        <span>@{post.author.username}</span>
+                        {post.location && (
+                          <>
+                            <span>·</span>
+                            <span className="truncate max-w-[150px]">{post.location}</span>
+                          </>
+                        )}
+                        <span>·</span>
+                        <span>{post.createdAt}</span>
+                      </div>
+                    </div>
+                  </button>
 
-                  {/* Top Right Options */}
+                  {/* Options Menu */}
                   <div className="relative">
                     <button
                       onClick={() =>
                         setActiveMenuPostId(activeMenuPostId === post.id ? null : post.id)
                       }
-                      className="p-1.5 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 rounded-lg"
+                      className="p-2 text-neutral-400 hover:text-white rounded-full hover:bg-white/10 transition-colors"
                       aria-label="Post actions"
                     >
                       <MoreHorizontal className="w-5 h-5" />
                     </button>
 
-                    {/* Dropdown Menu */}
                     {activeMenuPostId === post.id && (
-                      <div className="absolute right-0 top-full mt-1 w-44 rounded-xl bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 shadow-xl py-1 z-30">
+                      <div className="absolute right-0 top-full mt-1 w-44 rounded-2xl bg-[#1e1e1e] border border-white/10 shadow-2xl py-1 z-30">
                         {isAuthor ? (
                           <button
                             onClick={() => {
                               deletePost(post.id);
                               setActiveMenuPostId(null);
                             }}
-                            className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-500 hover:bg-neutral-100 dark:hover:bg-neutral-700 text-left"
+                            className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-400 hover:bg-white/10 text-left"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                             <span>Delete Post</span>
@@ -269,13 +361,13 @@ export const FeedView: React.FC = () => {
                                 toggleFollowUser(post.author.id);
                                 setActiveMenuPostId(null);
                               }}
-                              className="w-full flex items-center gap-2 px-3 py-2 text-xs text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-700 text-left"
+                              className="w-full flex items-center gap-2 px-3 py-2 text-xs text-neutral-200 hover:bg-white/10 text-left"
                             >
                               <span>{isFollowing(post.author.id) ? 'Unfollow' : 'Follow'} @{post.author.username}</span>
                             </button>
                             <button
                               onClick={() => handleReport(post)}
-                              className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-500 hover:bg-neutral-100 dark:hover:bg-neutral-700 text-left"
+                              className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-400 hover:bg-white/10 text-left"
                             >
                               <Flag className="w-3.5 h-3.5" />
                               <span>Report Post</span>
@@ -287,7 +379,7 @@ export const FeedView: React.FC = () => {
                             handleShare(post.id);
                             setActiveMenuPostId(null);
                           }}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-xs text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-700 text-left"
+                          className="w-full flex items-center gap-2 px-3 py-2 text-xs text-neutral-200 hover:bg-white/10 text-left"
                         >
                           <Share2 className="w-3.5 h-3.5" />
                           <span>Copy Link</span>
@@ -297,35 +389,89 @@ export const FeedView: React.FC = () => {
                   </div>
                 </header>
 
-                {/* Post Media with double-tap heart */}
+                {/* Post Media: Supports Native Video Player or Photos */}
                 <div
-                  className="relative aspect-square sm:aspect-4/3 bg-neutral-100 dark:bg-neutral-950 flex items-center justify-center overflow-hidden cursor-pointer select-none"
+                  className="relative aspect-square sm:aspect-[4/3] bg-black flex items-center justify-center overflow-hidden cursor-pointer select-none group"
                   onDoubleClick={() => handleDoubleTapLike(post.id)}
                 >
-                  <img
-                    src={post.media[0]?.url}
-                    alt={post.caption}
-                    referrerPolicy="no-referrer"
-                    className="w-full h-full object-cover transition-transform duration-300 hover:scale-[1.01]"
-                  />
+                  {isVideo ? (
+                    <div className="relative w-full h-full flex items-center justify-center">
+                      <video
+                        id={`post-video-${post.id}`}
+                        src={post.media[0]?.url}
+                        loop
+                        playsInline
+                        muted={isMuted}
+                        className="w-full h-full object-cover"
+                        onClick={e => {
+                          e.stopPropagation();
+                          toggleVideoPlayback(post.id, e.currentTarget);
+                        }}
+                      />
+
+                      {/* Video Play/Pause Floating Icon Button */}
+                      <button
+                        type="button"
+                        onClick={e => {
+                          e.stopPropagation();
+                          const el = document.getElementById(`post-video-${post.id}`) as HTMLVideoElement;
+                          toggleVideoPlayback(post.id, el);
+                        }}
+                        className={`absolute inset-0 flex items-center justify-center transition-opacity ${
+                          isCurrentPlaying ? 'opacity-0 group-hover:opacity-100 bg-black/30' : 'opacity-100 bg-black/40'
+                        }`}
+                      >
+                        <div className="w-14 h-14 rounded-full bg-white text-black flex items-center justify-center shadow-2xl hover:scale-110 transition-transform">
+                          {isCurrentPlaying ? <Pause className="w-6 h-6 fill-black" /> : <Play className="w-6 h-6 fill-black ml-1" />}
+                        </div>
+                      </button>
+
+                      {/* Video Controls Bar */}
+                      <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-xs text-white z-20">
+                        <button
+                          type="button"
+                          onClick={e => {
+                            e.stopPropagation();
+                            const el = document.getElementById(`post-video-${post.id}`) as HTMLVideoElement;
+                            toggleVideoMute(post.id, el);
+                          }}
+                          className="p-2 rounded-full bg-black/70 hover:bg-black text-white backdrop-blur-md border border-white/10 transition-colors"
+                        >
+                          {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                        </button>
+
+                        <div className="px-3 py-1 rounded-full bg-black/70 backdrop-blur-md border border-white/10 text-[10px] font-bold uppercase tracking-wider text-neutral-300 flex items-center gap-1.5">
+                          <Film className="w-3 h-3" />
+                          <span>Video Clip</span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <img
+                      src={post.media[0]?.url}
+                      alt={post.caption}
+                      referrerPolicy="no-referrer"
+                      className="w-full h-full object-cover group-hover:scale-[1.01] transition-transform duration-300"
+                    />
+                  )}
 
                   {/* Double tap heart animation */}
                   {showHeartAnim === post.id && (
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20 animate-in zoom-in-50 duration-200">
-                      <Heart className="w-24 h-24 fill-rose-500 text-rose-500 drop-shadow-2xl" />
+                      <Heart className="w-24 h-24 fill-white text-white drop-shadow-2xl" />
                     </div>
                   )}
 
                   {/* Sponsored tag if applicable */}
                   {post.isSponsored && (
-                    <div className="absolute top-3 left-3 px-2 py-0.5 rounded-md bg-neutral-900/80 backdrop-blur-md text-amber-300 text-[10px] font-semibold tracking-wide uppercase">
+                    <div className="absolute top-3 left-3 px-3 py-1 rounded-full bg-black/80 backdrop-blur-md text-white text-[10px] font-extrabold tracking-wider uppercase border border-white/20">
                       Sponsored · {post.sponsoredBrand}
                     </div>
                   )}
                 </div>
 
-                {/* Action Bar (Like, Comment, Share, Save) */}
-                <div className="p-3.5 space-y-2.5">
+                {/* Action Bar matching oneImage.webp */}
+                <div className="p-5 space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       {/* Like */}
@@ -337,8 +483,8 @@ export const FeedView: React.FC = () => {
                         <Heart
                           className={`w-6 h-6 transition-all ${
                             post.isLiked
-                              ? 'fill-rose-500 text-rose-500 scale-110'
-                              : 'text-neutral-700 dark:text-neutral-300 group-hover:text-rose-500'
+                              ? 'fill-white text-white scale-110'
+                              : 'text-neutral-300 group-hover:text-white'
                           }`}
                         />
                       </button>
@@ -349,7 +495,7 @@ export const FeedView: React.FC = () => {
                           const el = document.getElementById(`comment-input-${post.id}`);
                           el?.focus();
                         }}
-                        className="text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white"
+                        className="text-neutral-300 hover:text-white transition-colors"
                         aria-label="Comment"
                       >
                         <MessageCircle className="w-6 h-6" />
@@ -358,7 +504,7 @@ export const FeedView: React.FC = () => {
                       {/* Direct Message / Share */}
                       <button
                         onClick={() => startDirectMessage(post.author.id)}
-                        className="text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white"
+                        className="text-neutral-300 hover:text-white transition-colors"
                         aria-label="Send direct message"
                       >
                         <Send className="w-5.5 h-5.5" />
@@ -368,28 +514,28 @@ export const FeedView: React.FC = () => {
                     {/* Bookmark / Save */}
                     <button
                       onClick={() => toggleSavePost(post.id)}
-                      className="text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-white focus:outline-none"
+                      className="text-neutral-300 hover:text-white focus:outline-none transition-colors"
                       aria-label={post.isSaved ? 'Remove from saved' : 'Save post'}
                     >
                       <Bookmark
                         className={`w-6 h-6 ${
-                          post.isSaved ? 'fill-amber-500 text-amber-500' : ''
+                          post.isSaved ? 'fill-white text-white' : ''
                         }`}
                       />
                     </button>
                   </div>
 
-                  {/* Likes Count (Clean tabular number) */}
-                  <div className="text-xs font-bold text-neutral-900 dark:text-neutral-100 tabular-nums">
+                  {/* Likes Count */}
+                  <div className="text-xs font-extrabold text-white tabular-nums tracking-wide">
                     {post.likesCount.toLocaleString()} {post.likesCount === 1 ? 'like' : 'likes'}
                   </div>
 
-                  {/* Caption & Clean Unboxed Hashtags */}
-                  <div className="text-xs text-neutral-800 dark:text-neutral-200 leading-relaxed space-y-1">
+                  {/* Caption */}
+                  <div className="text-xs text-neutral-300 leading-relaxed space-y-1">
                     <p>
                       <button
                         onClick={() => openUserProfile(post.author.id)}
-                        className="font-bold mr-1.5 hover:underline focus:outline-none"
+                        className="font-bold mr-1.5 text-white hover:underline focus:outline-none"
                       >
                         {post.author.username}
                       </button>
@@ -399,22 +545,22 @@ export const FeedView: React.FC = () => {
 
                   {/* Comments Preview */}
                   {post.comments.length > 0 && (
-                    <div className="pt-1 space-y-1.5 border-t border-neutral-100 dark:border-neutral-800/40">
-                      <div className="text-[11px] text-neutral-400 font-medium">
+                    <div className="pt-2 space-y-1.5 border-t border-white/5">
+                      <div className="text-[11px] text-neutral-400 font-semibold">
                         Comments ({post.comments.length})
                       </div>
                       {post.comments.slice(-2).map(c => (
                         <div key={c.id} className="text-xs flex items-start gap-1.5">
                           <button
                             onClick={() => openUserProfile(c.userId)}
-                            className="font-bold text-neutral-900 dark:text-neutral-100 hover:underline shrink-0"
+                            className="font-bold text-white hover:underline shrink-0"
                           >
                             {c.username}
                           </button>
-                          <span className="text-neutral-700 dark:text-neutral-300 flex-1">
+                          <span className="text-neutral-300 flex-1">
                             {c.content}
                           </span>
-                          <span className="text-[10px] text-neutral-400 shrink-0">
+                          <span className="text-[10px] text-neutral-500 shrink-0">
                             {c.createdAt}
                           </span>
                         </div>
@@ -425,7 +571,7 @@ export const FeedView: React.FC = () => {
                   {/* Add Comment Input Form */}
                   <form
                     onSubmit={e => handleCommentSubmit(post.id, e)}
-                    className="pt-2 flex items-center gap-2 border-t border-neutral-100 dark:border-neutral-800/40"
+                    className="pt-2 flex items-center gap-2 border-t border-white/5"
                   >
                     <input
                       id={`comment-input-${post.id}`}
@@ -435,32 +581,13 @@ export const FeedView: React.FC = () => {
                       onChange={e =>
                         setCommentInputs(prev => ({ ...prev, [post.id]: e.target.value }))
                       }
-                      className="flex-1 bg-transparent text-xs text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 focus:outline-none py-1"
+                      className="flex-1 bg-[#1a1a1a] border border-white/10 rounded-full px-4 py-2 text-xs text-white placeholder:text-neutral-500 focus:outline-none focus:border-white transition-colors"
                     />
-
-                    {/* Quick Emojis */}
-                    <div className="flex items-center gap-1">
-                      {['❤️', '🔥', '✨'].map(emoji => (
-                        <button
-                          key={emoji}
-                          type="button"
-                          onClick={() =>
-                            setCommentInputs(prev => ({
-                              ...prev,
-                              [post.id]: (prev[post.id] || '') + emoji,
-                            }))
-                          }
-                          className="text-xs hover:scale-125 transition-transform px-0.5"
-                        >
-                          {emoji}
-                        </button>
-                      ))}
-                    </div>
 
                     <button
                       type="submit"
                       disabled={!commentInputs[post.id]?.trim()}
-                      className="text-xs font-bold text-amber-500 disabled:opacity-30 disabled:cursor-not-allowed hover:text-amber-400 px-2 py-1"
+                      className="px-4 py-2 rounded-full bg-white text-black font-extrabold text-xs disabled:opacity-30 disabled:cursor-not-allowed hover:bg-neutral-200 transition-colors"
                     >
                       Post
                     </button>
@@ -472,49 +599,68 @@ export const FeedView: React.FC = () => {
         </div>
       </div>
 
-      {/* Right Desktop Suggestions Column (1440px desktop baseline) */}
-      <aside className="hidden lg:block w-76 shrink-0 space-y-6 select-none">
-        {/* Current User Card */}
-        <div className="flex items-center justify-between p-3.5 rounded-2xl bg-white dark:bg-neutral-900/60 border border-neutral-200/80 dark:border-neutral-800/80 shadow-xs">
-          <button
-            onClick={() => openUserProfile(currentUser.id)}
-            className="flex items-center gap-3 text-left focus:outline-none min-w-0"
-          >
+      {/* Right Desktop Column (Cards matching reference screenshot) */}
+      <aside className="hidden lg:block w-80 shrink-0 space-y-5 select-none">
+        {/* User Card */}
+        <div className="p-5 rounded-[28px] bg-[#121212] border border-white/10 shadow-xl space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-neutral-400 uppercase tracking-wider">
+              Active Profile
+            </span>
+            <button
+              onClick={() => setCurrentView('profile')}
+              className="text-xs font-bold text-white hover:underline flex items-center gap-1"
+            >
+              <span>View</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <div className="flex items-center gap-3.5">
             <img
               src={currentUser.avatarUrl}
               alt={currentUser.displayName}
-              className="w-11 h-11 rounded-full object-cover ring-1 ring-neutral-300 dark:ring-neutral-700 shrink-0"
+              className="w-12 h-12 rounded-full object-cover ring-2 ring-white/20"
             />
             <div className="min-w-0">
-              <div className="text-xs font-bold text-neutral-900 dark:text-neutral-100 truncate flex items-center gap-1">
+              <div className="text-sm font-extrabold text-white truncate flex items-center gap-1">
                 <span>{currentUser.displayName}</span>
                 {currentUser.isVerified && (
-                  <CheckCircle2 className="w-3 h-3 text-amber-500 shrink-0" />
+                  <CheckCircle2 className="w-3.5 h-3.5 text-white fill-white text-black shrink-0" />
                 )}
               </div>
-              <div className="text-[11px] text-neutral-400 truncate">
+              <div className="text-xs text-neutral-400 truncate">
                 @{currentUser.username}
               </div>
             </div>
-          </button>
+          </div>
 
-          <button
-            onClick={() => setCurrentView('profile')}
-            className="text-[11px] font-bold text-amber-500 hover:text-amber-400"
-          >
-            View
-          </button>
+          {/* Quick Metrics (Clean bold numerals mirroring $45689.05 in screenshot) */}
+          <div className="pt-3 border-t border-white/10 grid grid-cols-2 gap-2 text-center">
+            <div className="p-2.5 rounded-2xl bg-[#1c1c1c] border border-white/5">
+              <div className="text-[10px] text-neutral-400 uppercase font-semibold">Followers</div>
+              <div className="text-base font-extrabold text-white tabular-nums">
+                {currentUser.followersCount.toLocaleString()}
+              </div>
+            </div>
+            <div className="p-2.5 rounded-2xl bg-[#1c1c1c] border border-white/5">
+              <div className="text-[10px] text-neutral-400 uppercase font-semibold">Publications</div>
+              <div className="text-base font-extrabold text-white tabular-nums">
+                {currentUser.postsCount}
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Suggested Creators & Friends */}
-        <div className="p-4 rounded-2xl bg-white dark:bg-neutral-900/60 border border-neutral-200/80 dark:border-neutral-800/80 shadow-xs space-y-3.5">
+        {/* Suggested Creators */}
+        <div className="p-5 rounded-[28px] bg-[#121212] border border-white/10 shadow-xl space-y-4">
           <div className="flex items-center justify-between text-xs">
-            <span className="font-semibold text-neutral-500 dark:text-neutral-400">
-              Suggested for you
+            <span className="font-bold text-neutral-400 uppercase tracking-wider">
+              Suggested Creators
             </span>
             <button
               onClick={() => setCurrentView('explore')}
-              className="text-[11px] font-semibold text-neutral-800 dark:text-neutral-200 hover:underline"
+              className="text-neutral-300 hover:text-white font-semibold text-xs"
             >
               See All
             </button>
@@ -530,24 +676,24 @@ export const FeedView: React.FC = () => {
                   <img
                     src={user.avatarUrl}
                     alt={user.displayName}
-                    className="w-9 h-9 rounded-full object-cover shrink-0"
+                    className="w-9 h-9 rounded-full object-cover shrink-0 ring-1 ring-white/10"
                   />
                   <div className="min-w-0">
-                    <div className="text-xs font-semibold text-neutral-900 dark:text-neutral-100 truncate">
+                    <div className="text-xs font-bold text-white truncate">
                       {user.displayName}
                     </div>
                     <div className="text-[10px] text-neutral-400 truncate">
-                      {user.category || `@${user.username}`}
+                      @{user.username}
                     </div>
                   </div>
                 </button>
 
                 <button
                   onClick={() => toggleFollowUser(user.id)}
-                  className={`text-xs font-semibold px-2.5 py-1 rounded-lg transition-colors whitespace-nowrap ${
+                  className={`text-xs font-bold px-3 py-1.5 rounded-full transition-all whitespace-nowrap ${
                     isFollowing(user.id)
-                      ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300'
-                      : 'bg-amber-500 text-neutral-950 hover:bg-amber-400'
+                      ? 'bg-[#222222] text-neutral-300 border border-white/10'
+                      : 'bg-white text-black hover:bg-neutral-200'
                   }`}
                 >
                   {isFollowing(user.id) ? 'Following' : 'Follow'}
@@ -557,23 +703,19 @@ export const FeedView: React.FC = () => {
           </div>
         </div>
 
-        {/* Quiet Platform Footer */}
-        <footer className="px-2 text-[11px] text-neutral-400 space-y-2">
+        {/* Noir Platform Footer */}
+        <footer className="px-3 text-[11px] text-neutral-500 space-y-2">
           <div className="flex flex-wrap gap-x-2 gap-y-1">
-            <span>About</span>
-            <span>·</span>
-            <span>Help</span>
-            <span>·</span>
             <span>Privacy</span>
             <span>·</span>
-            <span>Terms</span>
+            <span>Security</span>
             <span>·</span>
-            <span>Locations</span>
+            <span>Creator Fund</span>
             <span>·</span>
-            <span>Language</span>
+            <span>API</span>
           </div>
-          <div className="text-[10px] text-neutral-500">
-            © 2026 MIZIZI SOCIAL PLATFORM
+          <div className="text-[10px] text-neutral-600">
+            © 2026 MIZIZI SOCIAL · NOIR EDITION
           </div>
         </footer>
       </aside>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Heart, MessageCircle, Film, User, Tag } from 'lucide-react';
+import { Search, Heart, MessageCircle, Film, User, Tag, ArrowRight } from 'lucide-react';
 import { useSocial } from '../../context/SocialContext';
 import { Post } from '../../types';
 import { PostDetailModal } from '../common/PostDetailModal';
@@ -20,17 +20,16 @@ export const ExploreView: React.FC = () => {
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
 
   const categories = [
-    { id: 'all', label: 'All' },
-    { id: 'fashion', label: 'Fashion & Textiles' },
-    { id: 'travel', label: 'Travel & Islands' },
+    { id: 'all', label: 'All Media' },
+    { id: 'video', label: 'Videos & Reels' },
+    { id: 'fashion', label: 'Fashion & Style' },
     { id: 'nature', label: 'Wildlife & Nature' },
+    { id: 'travel', label: 'Travel & Islands' },
     { id: 'tech', label: 'Tech & Startups' },
   ];
 
-  // Filter posts based on category and search query
   const cleanQuery = searchQuery.trim().toLowerCase();
 
-  // Matched users
   const matchedUsers = cleanQuery
     ? allUsers.filter(
         u =>
@@ -41,7 +40,6 @@ export const ExploreView: React.FC = () => {
     : [];
 
   const filteredPosts = posts.filter(post => {
-    // Search match
     if (cleanQuery) {
       const matchCaption = post.caption.toLowerCase().includes(cleanQuery);
       const matchTag = post.hashtags.some(t => t.toLowerCase().includes(cleanQuery));
@@ -51,7 +49,9 @@ export const ExploreView: React.FC = () => {
       if (!matchCaption && !matchTag && !matchAuthor) return false;
     }
 
-    // Category filter
+    if (activeCategory === 'video') {
+      return post.media[0]?.type === 'video';
+    }
     if (activeCategory === 'fashion') {
       return (
         post.hashtags.some(t => t.toLowerCase().includes('fashion')) ||
@@ -82,38 +82,38 @@ export const ExploreView: React.FC = () => {
   });
 
   return (
-    <div className="max-w-5xl mx-auto px-3 sm:px-6 py-6 space-y-6">
+    <div className="max-w-5xl mx-auto px-3 sm:px-6 py-6 space-y-6 text-white select-none">
       {/* Search Header */}
       <div className="space-y-4">
         <div className="relative max-w-xl mx-auto">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" />
+          <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400" />
           <input
             type="text"
-            placeholder="Search creators, #hashtags, topics, locations..."
+            placeholder="Search creators, #hashtags, video topics..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 focus:outline-none focus:border-amber-500 transition-colors"
+            className="w-full pl-11 pr-4 py-3 rounded-full bg-[#141414] border border-white/10 text-sm text-white placeholder:text-neutral-500 focus:outline-none focus:border-white transition-colors shadow-xl"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-neutral-400 hover:text-white"
             >
               Clear
             </button>
           )}
         </div>
 
-        {/* Category Filter Bar (Interactive Buttons) */}
+        {/* Category Pill Filters (Matching oneImage.webp pill buttons) */}
         <div className="flex items-center justify-center gap-2 overflow-x-auto no-scrollbar py-1">
           {categories.map(cat => (
             <button
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-medium transition-colors whitespace-nowrap ${
+              className={`px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
                 activeCategory === cat.id
-                  ? 'bg-amber-500 text-neutral-950 font-semibold shadow-xs'
-                  : 'bg-neutral-100 dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200'
+                  ? 'bg-white text-black shadow-lg scale-105'
+                  : 'bg-[#141414] text-neutral-400 hover:text-white border border-white/5'
               }`}
             >
               {cat.label}
@@ -122,29 +122,29 @@ export const ExploreView: React.FC = () => {
         </div>
       </div>
 
-      {/* Matched Users Section (if searching) */}
+      {/* Matched Users Section */}
       {cleanQuery && matchedUsers.length > 0 && (
-        <div className="p-4 rounded-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 space-y-3">
-          <div className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">
+        <div className="p-5 rounded-[28px] bg-[#121212] border border-white/10 space-y-3 shadow-xl">
+          <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">
             Matching People ({matchedUsers.length})
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
             {matchedUsers.map(user => (
               <div
                 key={user.id}
-                className="flex items-center justify-between p-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-800/60 border border-neutral-200/60 dark:border-neutral-700/60"
+                className="flex items-center justify-between p-3 rounded-2xl bg-[#1c1c1c] border border-white/5"
               >
                 <button
                   onClick={() => openUserProfile(user.id)}
-                  className="flex items-center gap-2.5 text-left min-w-0"
+                  className="flex items-center gap-3 text-left min-w-0"
                 >
                   <img
                     src={user.avatarUrl}
                     alt={user.displayName}
-                    className="w-10 h-10 rounded-full object-cover shrink-0"
+                    className="w-10 h-10 rounded-full object-cover shrink-0 ring-1 ring-white/20"
                   />
                   <div className="min-w-0">
-                    <div className="text-xs font-bold text-neutral-900 dark:text-neutral-100 truncate">
+                    <div className="text-xs font-bold text-white truncate">
                       {user.displayName}
                     </div>
                     <div className="text-[10px] text-neutral-400 truncate">
@@ -155,10 +155,10 @@ export const ExploreView: React.FC = () => {
 
                 <button
                   onClick={() => toggleFollowUser(user.id)}
-                  className={`text-xs font-semibold px-2.5 py-1 rounded-lg shrink-0 ${
+                  className={`text-xs font-bold px-3 py-1.5 rounded-full shrink-0 ${
                     isFollowing(user.id)
-                      ? 'bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300'
-                      : 'bg-amber-500 text-neutral-950 hover:bg-amber-400'
+                      ? 'bg-[#282828] text-neutral-300 border border-white/10'
+                      : 'bg-white text-black hover:bg-neutral-200'
                   }`}
                 >
                   {isFollowing(user.id) ? 'Following' : 'Follow'}
@@ -169,43 +169,62 @@ export const ExploreView: React.FC = () => {
         </div>
       )}
 
-      {/* Explore Grid of Posts & Reels */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4">
-        {filteredPosts.map(post => (
-          <div
-            key={post.id}
-            onClick={() => setSelectedPost(post)}
-            className="group relative aspect-square bg-neutral-900 rounded-xl overflow-hidden cursor-pointer shadow-xs"
-          >
-            <img
-              src={post.media[0]?.url}
-              alt={post.caption}
-              referrerPolicy="no-referrer"
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            />
+      {/* Media Mosaic Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+        {filteredPosts.map(post => {
+          const isVideo = post.media[0]?.type === 'video';
+          return (
+            <div
+              key={post.id}
+              onClick={() => setSelectedPost(post)}
+              className="group relative aspect-square bg-[#121212] rounded-[26px] overflow-hidden cursor-pointer shadow-xl border border-white/10"
+            >
+              {isVideo ? (
+                <video
+                  src={post.media[0]?.url}
+                  muted
+                  loop
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+              ) : (
+                <img
+                  src={post.media[0]?.url}
+                  alt={post.caption}
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+              )}
 
-            {/* Hover Stat Overlay */}
-            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-6 text-white font-bold text-sm">
-              <div className="flex items-center gap-1.5">
-                <Heart className="w-5 h-5 fill-white" />
-                <span className="tabular-nums">{post.likesCount}</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <MessageCircle className="w-5 h-5 fill-white" />
-                <span className="tabular-nums">{post.commentsCount}</span>
+              {/* Video Badge */}
+              {isVideo && (
+                <div className="absolute top-3 right-3 p-1.5 rounded-full bg-black/70 backdrop-blur-md text-white border border-white/10">
+                  <Film className="w-3.5 h-3.5" />
+                </div>
+              )}
+
+              {/* Hover Overlay */}
+              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-6 text-white font-extrabold text-sm">
+                <div className="flex items-center gap-1.5">
+                  <Heart className="w-5 h-5 fill-white" />
+                  <span className="tabular-nums">{post.likesCount}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <MessageCircle className="w-5 h-5 fill-white" />
+                  <span className="tabular-nums">{post.commentsCount}</span>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {filteredPosts.length === 0 && (
-        <div className="text-center py-16 text-neutral-500 text-sm">
-          No explore items found matching your search.
+        <div className="text-center py-16 text-neutral-500 text-xs">
+          No publications found in this category.
         </div>
       )}
 
-      {/* Lightbox Post Detail Modal */}
+      {/* Post Detail Lightbox */}
       <PostDetailModal
         post={selectedPost}
         onClose={() => setSelectedPost(null)}

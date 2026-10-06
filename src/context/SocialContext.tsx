@@ -59,7 +59,7 @@ interface SocialContextType {
   toggleSavePost: (postId: string) => void;
   addComment: (postId: string, content: string) => void;
   deleteComment: (postId: string, commentId: string) => void;
-  createPost: (caption: string, mediaUrl: string, location?: string, hashtags?: string[]) => void;
+  createPost: (caption: string, mediaUrl: string, location?: string, hashtags?: string[], mediaType?: 'image' | 'video') => void;
   deletePost: (postId: string) => void;
 
   // Follow System
@@ -76,6 +76,7 @@ interface SocialContextType {
 
   // Reels
   reels: Reel[];
+  createReel: (videoUrl: string, caption: string, musicTitle?: string) => void;
   toggleLikeReel: (reelId: string) => void;
   toggleSaveReel: (reelId: string) => void;
 
@@ -475,7 +476,8 @@ export const SocialProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     caption: string,
     mediaUrl: string,
     location?: string,
-    hashtags: string[] = []
+    hashtags: string[] = [],
+    mediaType: 'image' | 'video' = 'image'
   ) => {
     const extractedTags = hashtags.length > 0
       ? hashtags
@@ -496,8 +498,8 @@ export const SocialProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         {
           id: `media_${Date.now()}`,
           url: mediaUrl,
-          type: 'image',
-          aspectRatio: '1:1',
+          type: mediaType,
+          aspectRatio: mediaType === 'video' ? '16:9' : '1:1',
         },
       ],
       caption,
@@ -519,6 +521,28 @@ export const SocialProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       prev.map(u => (u.id === currentUser.id ? { ...u, postsCount: u.postsCount + 1 } : u))
     );
 
+    setIsCreateModalOpen(false);
+  };
+
+  const createReel = (videoUrl: string, caption: string, musicTitle?: string) => {
+    const newReel: Reel = {
+      id: `reel_${Date.now()}`,
+      userId: currentUser.id,
+      username: currentUser.username,
+      userAvatar: currentUser.avatarUrl,
+      videoUrl,
+      caption,
+      musicTitle: musicTitle || 'Original Audio · ' + currentUser.username,
+      likesCount: 0,
+      commentsCount: 0,
+      sharesCount: 0,
+      viewsCount: 1,
+      isLiked: false,
+      isSaved: false,
+      createdAt: 'Just now',
+    };
+
+    setReels(prev => [newReel, ...prev]);
     setIsCreateModalOpen(false);
   };
 
@@ -791,6 +815,7 @@ export const SocialProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         addStory,
         markStoryViewed,
         reels,
+        createReel,
         toggleLikeReel,
         toggleSaveReel,
         conversations,

@@ -23,6 +23,8 @@ export interface PostMedia {
   id: string;
   url: string;
   type: 'image' | 'video';
+  thumbnailUrl?: string;
+  duration?: number;
   aspectRatio?: '1:1' | '4:3' | '16:9' | '9:16';
 }
 
