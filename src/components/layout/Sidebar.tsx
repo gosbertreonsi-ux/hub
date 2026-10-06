@@ -15,6 +15,8 @@ import {
   ChevronDown,
   ArrowRight,
   Menu,
+  Crown,
+  Sparkles,
 } from 'lucide-react';
 import { useSocial } from '../../context/SocialContext';
 
@@ -30,6 +32,8 @@ export const Sidebar: React.FC = () => {
     conversations,
     setIsCreateModalOpen,
     setIsDownloadModalOpen,
+    isSubscribed,
+    setIsSubscriptionModalOpen,
     theme,
     toggleTheme,
   } = useSocial();
@@ -153,7 +157,7 @@ export const Sidebar: React.FC = () => {
         </nav>
 
         {/* Primary Action Button (White Pill matching Send Money > in oneImage.webp) */}
-        <div className="pt-2">
+        <div className="pt-2 space-y-2">
           <button
             onClick={() => setIsCreateModalOpen(true)}
             className="w-full py-3.5 px-5 rounded-full bg-white hover:bg-neutral-200 text-black font-extrabold text-xs flex items-center justify-between transition-all shadow-xl active:scale-95"
@@ -163,6 +167,33 @@ export const Sidebar: React.FC = () => {
               <span>Publish Post / Video</span>
             </div>
             <ArrowRight className="w-4 h-4" />
+          </button>
+
+          {/* PlayHub VIP Membership Card */}
+          <button
+            type="button"
+            onClick={() => setIsSubscriptionModalOpen(true)}
+            className={`w-full p-3 rounded-2xl border text-left transition-all flex items-center justify-between ${
+              isSubscribed
+                ? 'bg-[#1c180e] border-amber-400/40 text-amber-300'
+                : 'bg-gradient-to-r from-[#171510] to-[#14120e] border-white/10 hover:border-amber-400/40'
+            }`}
+          >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-7 h-7 rounded-xl bg-amber-400 text-black flex items-center justify-center shadow">
+                <Crown className="w-4 h-4 fill-black" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-[11px] font-extrabold text-white truncate flex items-center gap-1">
+                  <span>{isSubscribed ? 'VIP Pass Active' : 'PlayHub VIP Pass'}</span>
+                  {isSubscribed && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />}
+                </div>
+                <div className="text-[10px] text-neutral-400 truncate">
+                  {isSubscribed ? 'Unlimited 4K Streams' : 'Entering Free · View Sub'}
+                </div>
+              </div>
+            </div>
+            <Sparkles className="w-3.5 h-3.5 text-amber-300 shrink-0" />
           </button>
         </div>
 

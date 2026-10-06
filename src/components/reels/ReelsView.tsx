@@ -1,20 +1,17 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Heart,
   MessageCircle,
   Bookmark,
-  Volume2,
-  VolumeX,
   Music,
   ChevronUp,
   ChevronDown,
   Share2,
-  Play,
-  Pause,
   Plus,
+  Crown,
 } from 'lucide-react';
 import { useSocial } from '../../context/SocialContext';
-import { Reel } from '../../types';
+import { PlayHubVideoPlayer } from '../common/PlayHubVideoPlayer';
 
 export const ReelsView: React.FC = () => {
   const {
@@ -25,23 +22,14 @@ export const ReelsView: React.FC = () => {
     isFollowing,
     openUserProfile,
     setIsCreateModalOpen,
+    isSubscribed,
+    setIsSubscriptionModalOpen,
   } = useSocial();
 
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isMuted, setIsMuted] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [shareToast, setShareToast] = useState(false);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const currentReel = reels[activeIndex] || reels[0];
-
-  useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.currentTime = 0;
-      videoRef.current.play().catch(() => {});
-      setIsPlaying(true);
-    }
-  }, [activeIndex]);
 
   const handlePrev = () => {
     if (activeIndex > 0) setActiveIndex(activeIndex - 1);
@@ -51,22 +39,15 @@ export const ReelsView: React.FC = () => {
     if (activeIndex < reels.length - 1) setActiveIndex(activeIndex + 1);
   };
 
-  const togglePlay = () => {
-    if (videoRef.current) {
-      if (videoRef.current.paused) {
-        videoRef.current.play();
-        setIsPlaying(true);
-      } else {
-        videoRef.current.pause();
-        setIsPlaying(false);
-      }
-    }
-  };
-
   const handleShare = () => {
     navigator.clipboard?.writeText(window.location.href);
-    setShareToast(true);
-    setTimeout(() => setShareToast(false), 2000);
+    setToastMessage('Reel link copied to clipboard!');
+    setTimeout(() => setToastMessage(null), 2200);
+  };
+
+  const handleOpenComments = () => {
+    setToastMessage(`Viewing comments for @${currentReel.username}'s reel`);
+    setTimeout(() => setToastMessage(null), 2500);
   };
 
   if (!currentReel) return null;
@@ -74,73 +55,76 @@ export const ReelsView: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto px-2 py-4 flex items-center justify-center min-h-[calc(100vh-5rem)] select-none text-white">
       {/* Toast Alert */}
-      {shareToast && (
+      {toastMessage && (
         <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-full bg-white text-black text-xs font-extrabold shadow-2xl border border-white/20 animate-in fade-in">
-          Reel link copied to clipboard!
+          {toastMessage}
         </div>
       )}
 
-      {/* Main Reels Frame matching oneImage.webp phone screen */}
+      {/* Main Reels Frame */}
       <div className="relative flex items-center gap-6">
         {/* Vertical Reel Theater Card */}
         <div className="relative w-full max-w-[390px] sm:w-[390px] h-[84vh] max-h-[780px] rounded-[36px] overflow-hidden bg-black shadow-2xl border border-white/10 flex flex-col justify-between group">
-          {/* HTML5 Native Video Player */}
-          <video
-            ref={videoRef}
-            src={currentReel.videoUrl}
-            loop
-            playsInline
-            muted={isMuted}
-            autoPlay
-            onClick={togglePlay}
-            className="absolute inset-0 w-full h-full object-cover z-0 cursor-pointer"
-          />
+          {/* Robust PlayHub Video Player with Built-in Paywall Teaser */}
+          <div className="absolute inset-0 w-full h-full">
+            <PlayHubVideoPlayer
+              key={currentReel.id}
+              src={currentReel.videoUrl}
+              poster={currentReel.userAvatar}
+              aspectRatio="9:16"
+              autoPlay={true}
+              loop={true}
+              muted={false}
+              isSubscriberOnly={currentReel.isSubscriberOnly ?? true}
+              teaserDuration={5}
+              title={currentReel.caption}
+              authorName={currentReel.username}
+            />
+          </div>
 
-          {/* Scrim Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/60 pointer-events-none z-10" />
-
-          {/* Top Bar matching reference */}
-          <div className="relative z-20 p-5 flex items-center justify-between text-white">
-            <span className="font-display font-black text-sm tracking-widest uppercase">
-              MIZIZI REELS
-            </span>
+          {/* Top Bar */}
+          <div className="relative z-20 p-5 flex items-center justify-between text-white pointer-events-auto">
+            <div className="flex items-center gap-2">
+              <span className="font-display font-black text-sm tracking-widest uppercase">
+                MIZIZI REELS
+              </span>
+              {currentReel.isSubscriberOnly && (
+                <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-400 text-black flex items-center gap-1 shadow">
+                  <Crown className="w-2.5 h-2.5" />
+                  VIP
+                </span>
+              )}
+            </div>
 
             <div className="flex items-center gap-2">
+              {!isSubscribed && (
+                <button
+                  type="button"
+                  onClick={() => setIsSubscriptionModalOpen(true)}
+                  className="px-2.5 py-1 rounded-full bg-amber-400 hover:bg-amber-300 text-black font-extrabold text-[10px] flex items-center gap-1 shadow-md transition-colors"
+                >
+                  <Crown className="w-3 h-3 fill-black" />
+                  <span>Get VIP</span>
+                </button>
+              )}
+
               <button
+                type="button"
                 onClick={() => setIsCreateModalOpen(true)}
-                className="px-3 py-1.5 rounded-full bg-white text-black font-extrabold text-[11px] flex items-center gap-1 shadow-lg"
+                className="px-3 py-1.5 rounded-full bg-white text-black font-extrabold text-[11px] flex items-center gap-1 shadow-lg hover:bg-neutral-200 transition-colors"
               >
                 <Plus className="w-3.5 h-3.5 stroke-[3]" />
                 <span>Upload</span>
               </button>
-
-              <button
-                onClick={() => setIsMuted(!isMuted)}
-                className="p-2 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white hover:bg-black/90 transition-colors"
-                aria-label={isMuted ? 'Unmute' : 'Mute'}
-              >
-                {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-              </button>
             </div>
           </div>
 
-          {/* Center Play Indicator */}
-          {!isPlaying && (
-            <div
-              onClick={togglePlay}
-              className="absolute inset-0 z-20 flex items-center justify-center cursor-pointer bg-black/30"
-            >
-              <div className="w-16 h-16 rounded-full bg-white text-black flex items-center justify-center shadow-2xl">
-                <Play className="w-8 h-8 fill-black ml-1" />
-              </div>
-            </div>
-          )}
-
           {/* Bottom Info Overlay */}
-          <div className="relative z-20 p-5 space-y-3 text-white">
+          <div className="relative z-20 p-5 space-y-3 text-white pointer-events-auto">
             {/* Creator Row */}
             <div className="flex items-center justify-between">
               <button
+                type="button"
                 onClick={() => openUserProfile(currentReel.userId)}
                 className="flex items-center gap-3 text-left focus:outline-none"
               >
@@ -155,6 +139,7 @@ export const ReelsView: React.FC = () => {
               </button>
 
               <button
+                type="button"
                 onClick={() => toggleFollowUser(currentReel.userId)}
                 className={`text-xs font-bold px-4 py-1.5 rounded-full border transition-all ${
                   isFollowing(currentReel.userId)
@@ -179,10 +164,11 @@ export const ReelsView: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Vertical Action Column (Sleek Squircle / Pill Buttons matching oneImage.webp) */}
+        {/* Right Vertical Action Column */}
         <div className="flex flex-col items-center gap-4 text-white">
           {/* Like */}
           <button
+            type="button"
             onClick={() => toggleLikeReel(currentReel.id)}
             className="flex flex-col items-center gap-1 group focus:outline-none"
           >
@@ -200,7 +186,8 @@ export const ReelsView: React.FC = () => {
 
           {/* Comments */}
           <button
-            onClick={() => alert(`Comments view available in feed lightbox`)}
+            type="button"
+            onClick={handleOpenComments}
             className="flex flex-col items-center gap-1 group focus:outline-none"
           >
             <div className="p-3.5 rounded-2xl bg-[#1c1c1c] border border-white/10 shadow-lg group-hover:scale-110 transition-transform">
@@ -213,6 +200,7 @@ export const ReelsView: React.FC = () => {
 
           {/* Share */}
           <button
+            type="button"
             onClick={handleShare}
             className="flex flex-col items-center gap-1 group focus:outline-none"
           >
@@ -226,6 +214,7 @@ export const ReelsView: React.FC = () => {
 
           {/* Bookmark */}
           <button
+            type="button"
             onClick={() => toggleSaveReel(currentReel.id)}
             className="flex flex-col items-center gap-1 group focus:outline-none"
           >
@@ -241,6 +230,7 @@ export const ReelsView: React.FC = () => {
           {/* Navigation Up / Down */}
           <div className="pt-2 flex flex-col gap-2">
             <button
+              type="button"
               onClick={handlePrev}
               disabled={activeIndex === 0}
               className="p-2.5 rounded-full bg-[#1c1c1c] border border-white/10 disabled:opacity-20 hover:bg-[#282828] transition-colors"
@@ -249,6 +239,7 @@ export const ReelsView: React.FC = () => {
               <ChevronUp className="w-4 h-4" />
             </button>
             <button
+              type="button"
               onClick={handleNext}
               disabled={activeIndex === reels.length - 1}
               className="p-2.5 rounded-full bg-[#1c1c1c] border border-white/10 disabled:opacity-20 hover:bg-[#282828] transition-colors"

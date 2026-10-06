@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Heart, MessageCircle, Film, User, Tag, ArrowRight } from 'lucide-react';
+import { Search, Heart, MessageCircle, Film, User, Tag, ArrowRight, Crown } from 'lucide-react';
 import { useSocial } from '../../context/SocialContext';
 import { Post } from '../../types';
 import { PostDetailModal } from '../common/PostDetailModal';
@@ -173,34 +173,35 @@ export const ExploreView: React.FC = () => {
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
         {filteredPosts.map(post => {
           const isVideo = post.media[0]?.type === 'video';
+          const mediaUrl = post.media[0]?.thumbnailUrl || post.media[0]?.url;
+          const isVIP = post.isSubscriberOnly || post.media[0]?.isSubscriberOnly;
+
           return (
             <div
               key={post.id}
               onClick={() => setSelectedPost(post)}
               className="group relative aspect-square bg-[#121212] rounded-[26px] overflow-hidden cursor-pointer shadow-xl border border-white/10"
             >
-              {isVideo ? (
-                <video
-                  src={post.media[0]?.url}
-                  muted
-                  loop
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-              ) : (
-                <img
-                  src={post.media[0]?.url}
-                  alt={post.caption}
-                  referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-              )}
+              <img
+                src={mediaUrl}
+                alt={post.caption}
+                referrerPolicy="no-referrer"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              />
 
-              {/* Video Badge */}
-              {isVideo && (
-                <div className="absolute top-3 right-3 p-1.5 rounded-full bg-black/70 backdrop-blur-md text-white border border-white/10">
-                  <Film className="w-3.5 h-3.5" />
-                </div>
-              )}
+              {/* Badges: Video & VIP */}
+              <div className="absolute top-3 right-3 flex items-center gap-1.5 z-10">
+                {isVIP && (
+                  <div className="p-1.5 rounded-full bg-amber-400 text-black shadow-md">
+                    <Crown className="w-3.5 h-3.5 fill-black" />
+                  </div>
+                )}
+                {isVideo && (
+                  <div className="p-1.5 rounded-full bg-black/70 backdrop-blur-md text-white border border-white/10">
+                    <Film className="w-3.5 h-3.5" />
+                  </div>
+                )}
+              </div>
 
               {/* Hover Overlay */}
               <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-6 text-white font-extrabold text-sm">

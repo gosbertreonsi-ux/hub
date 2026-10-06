@@ -19,6 +19,7 @@ import { AdminDashboardView } from './components/admin/AdminDashboardView';
 import { StoriesViewerModal } from './components/stories/StoriesViewerModal';
 import { CreatePostModal } from './components/create/CreatePostModal';
 import { DownloadFolderModal } from './components/common/DownloadFolderModal';
+import { SubscriptionModal } from './components/common/SubscriptionModal';
 
 const AppContent: React.FC = () => {
   const { currentView } = useSocial();
@@ -66,6 +67,7 @@ const AppContent: React.FC = () => {
       <StoriesViewerModal />
       <CreatePostModal />
       <DownloadFolderModal />
+      <SubscriptionModal />
     </div>
   );
 };

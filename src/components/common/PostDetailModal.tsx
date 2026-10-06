@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useSocial } from '../../context/SocialContext';
 import { Post } from '../../types';
+import { PlayHubVideoPlayer } from './PlayHubVideoPlayer';
 
 interface PostDetailModalProps {
   post: Post | null;
@@ -60,14 +61,19 @@ export const PostDetailModal: React.FC<PostDetailModalProps> = ({ post, onClose 
         {/* Media Frame (Left) */}
         <div className="w-full md:w-3/5 bg-black flex items-center justify-center relative min-h-[320px]">
           {isVideo ? (
-            <video
-              src={post.media[0]?.url}
-              controls
-              autoPlay
-              loop
-              playsInline
-              className="w-full h-full max-h-[85vh] object-contain"
-            />
+            <div className="w-full h-full flex items-center justify-center">
+              <PlayHubVideoPlayer
+                src={post.media[0]?.url}
+                poster={post.media[0]?.thumbnailUrl}
+                aspectRatio="16:9"
+                autoPlay={true}
+                loop={true}
+                isSubscriberOnly={post.isSubscriberOnly || post.media[0]?.isSubscriberOnly}
+                teaserDuration={5}
+                title={post.caption}
+                authorName={post.author.displayName}
+              />
+            </div>
           ) : (
             <img
               src={post.media[0]?.url}

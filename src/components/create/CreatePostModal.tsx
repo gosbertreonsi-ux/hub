@@ -15,6 +15,8 @@ import {
   Check,
   Music,
   ArrowRight,
+  Crown,
+  Lock,
 } from 'lucide-react';
 import { useSocial } from '../../context/SocialContext';
 import { generateSocialCaption } from '../../services/geminiService';
@@ -74,6 +76,7 @@ export const CreatePostModal: React.FC = () => {
   const [hashtagsInput, setHashtagsInput] = useState('');
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [selectedTone, setSelectedTone] = useState<'aesthetic' | 'inspirational' | 'playful'>('aesthetic');
+  const [isPaywallProtected, setIsPaywallProtected] = useState(true);
 
   if (!isCreateModalOpen) return null;
 
@@ -150,12 +153,12 @@ export const CreatePostModal: React.FC = () => {
 
     if (mediaKind === 'video') {
       if (postFormat === 'reel') {
-        createReel(selectedVideo, caption.trim() || 'Visual Reel', musicTitle.trim());
+        createReel(selectedVideo, caption.trim() || 'Visual Reel', musicTitle.trim(), isPaywallProtected);
       } else {
-        createPost(caption.trim() || 'Video Upload', selectedVideo, location.trim(), tags, 'video');
+        createPost(caption.trim() || 'Video Upload', selectedVideo, location.trim(), tags, 'video', isPaywallProtected);
       }
     } else {
-      createPost(caption.trim() || 'Visual Story', selectedImage, location.trim(), tags, 'image');
+      createPost(caption.trim() || 'Visual Story', selectedImage, location.trim(), tags, 'image', isPaywallProtected);
     }
 
     // Reset
@@ -222,6 +225,7 @@ export const CreatePostModal: React.FC = () => {
                   muted={isMuted}
                   playsInline
                   onLoadedMetadata={e => setVideoDuration(Math.round(e.currentTarget.duration))}
+                  onError={() => setSelectedVideo('https://assets.mixkit.co/videos/preview/mixkit-tree-branches-in-the-breeze-1188-large.mp4')}
                   className="w-full h-full object-cover"
                 />
 
@@ -517,6 +521,31 @@ export const CreatePostModal: React.FC = () => {
                 placeholder="#MiziziSocial #VideoCreator #AfricaStories"
                 className="w-full px-3.5 py-2 rounded-xl bg-[#181818] border border-white/10 text-white placeholder:text-neutral-500 focus:outline-none focus:border-white transition-colors"
               />
+            </div>
+
+            {/* PlayHub VIP Monetization Paywall Toggle */}
+            <div className="p-3.5 rounded-2xl bg-gradient-to-r from-[#1c180e] to-[#161410] border border-amber-500/30 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-amber-300 font-extrabold text-xs">
+                  <Crown className="w-4 h-4 fill-amber-300" />
+                  <span>PlayHub VIP Paywall</span>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isPaywallProtected}
+                    onChange={e => setIsPaywallProtected(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-9 h-5 bg-[#333] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-400"></div>
+                </label>
+              </div>
+
+              <p className="text-[11px] text-neutral-300 leading-snug">
+                {isPaywallProtected
+                  ? '🔒 Monetized: Entering is free. Viewers get a 5-second free teaser, then must have an active VIP subscription ($4.99/mo) to watch full video.'
+                  : '🔓 Free Access: Anyone on the platform can watch the full video without a subscription.'}
+              </p>
             </div>
 
             {/* Noir Style Pill Primary Button matching oneImage.webp ("Send Money >" / "Next >") */}

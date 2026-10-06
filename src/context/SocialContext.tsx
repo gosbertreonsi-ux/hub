@@ -118,17 +118,17 @@ interface SocialContextType {
 const SocialContext = createContext<SocialContextType | undefined>(undefined);
 
 const STORAGE_KEYS = {
-  USERS: 'mizizi_users_v1',
-  CURRENT_USER_ID: 'mizizi_current_user_id_v1',
-  POSTS: 'mizizi_posts_v1',
-  FOLLOWING: 'mizizi_following_v1',
-  STORIES: 'mizizi_stories_v1',
-  REELS: 'mizizi_reels_v1',
-  CONVERSATIONS: 'mizizi_conversations_v1',
-  MESSAGES: 'mizizi_messages_v1',
-  NOTIFICATIONS: 'mizizi_notifications_v1',
-  REPORTS: 'mizizi_reports_v1',
-  THEME: 'mizizi_theme_v1',
+  USERS: 'mizizi_users_v2',
+  CURRENT_USER_ID: 'mizizi_current_user_id_v2',
+  POSTS: 'mizizi_posts_v2',
+  FOLLOWING: 'mizizi_following_v2',
+  STORIES: 'mizizi_stories_v2',
+  REELS: 'mizizi_reels_v2',
+  CONVERSATIONS: 'mizizi_conversations_v2',
+  MESSAGES: 'mizizi_messages_v2',
+  NOTIFICATIONS: 'mizizi_notifications_v2',
+  REPORTS: 'mizizi_reports_v2',
+  THEME: 'mizizi_theme_v2',
 };
 
 export const SocialProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {

@@ -17,6 +17,7 @@ import {
   Send,
   Video,
   Sparkles,
+  Crown,
 } from 'lucide-react';
 import { useSocial } from '../../context/SocialContext';
 import { Post, Reel } from '../../types';
@@ -305,34 +306,35 @@ export const ProfileView: React.FC = () => {
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
           {userPosts.map(post => {
             const isVideo = post.media[0]?.type === 'video';
+            const mediaUrl = post.media[0]?.thumbnailUrl || post.media[0]?.url;
+            const isVIP = post.isSubscriberOnly || post.media[0]?.isSubscriberOnly;
+
             return (
               <div
                 key={post.id}
                 onClick={() => setSelectedPost(post)}
                 className="group relative aspect-square bg-[#141414] rounded-[24px] overflow-hidden cursor-pointer border border-white/10 shadow-lg"
               >
-                {isVideo ? (
-                  <video
-                    src={post.media[0]?.url}
-                    muted
-                    loop
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                ) : (
-                  <img
-                    src={post.media[0]?.url}
-                    alt={post.caption}
-                    referrerPolicy="no-referrer"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                )}
+                <img
+                  src={mediaUrl}
+                  alt={post.caption}
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
 
-                {/* Video Indicator */}
-                {isVideo && (
-                  <div className="absolute top-3 right-3 p-1.5 rounded-full bg-black/70 backdrop-blur-md text-white border border-white/10">
-                    <Film className="w-3.5 h-3.5" />
-                  </div>
-                )}
+                {/* Indicators */}
+                <div className="absolute top-3 right-3 flex items-center gap-1.5 z-10">
+                  {isVIP && (
+                    <div className="p-1.5 rounded-full bg-amber-400 text-black shadow-md">
+                      <Crown className="w-3.5 h-3.5 fill-black" />
+                    </div>
+                  )}
+                  {isVideo && (
+                    <div className="p-1.5 rounded-full bg-black/70 backdrop-blur-md text-white border border-white/10">
+                      <Film className="w-3.5 h-3.5" />
+                    </div>
+                  )}
+                </div>
 
                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-6 text-white font-extrabold text-xs">
                   <div className="flex items-center gap-1.5">
@@ -361,15 +363,21 @@ export const ProfileView: React.FC = () => {
           {userReels.map(reel => (
             <div
               key={reel.id}
-              className="group relative aspect-[9/16] bg-[#141414] rounded-[24px] overflow-hidden border border-white/10 shadow-lg"
+              onClick={() => setCurrentView('reels')}
+              className="group relative aspect-[9/16] bg-[#141414] rounded-[24px] overflow-hidden border border-white/10 shadow-lg cursor-pointer"
             >
-              <video
-                src={reel.videoUrl}
-                muted
-                loop
+              <img
+                src={reel.userAvatar}
+                alt={reel.caption}
+                referrerPolicy="no-referrer"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
+              <div className="absolute top-3 right-3 z-10">
+                <span className="p-1.5 rounded-full bg-amber-400 text-black flex items-center justify-center shadow">
+                  <Crown className="w-3 h-3 fill-black" />
+                </span>
+              </div>
               <div className="absolute bottom-3 left-3 text-white text-xs font-extrabold flex items-center gap-1.5 drop-shadow-md">
                 <Play className="w-3.5 h-3.5 fill-white" />
                 <span>{reel.viewsCount.toLocaleString()}</span>

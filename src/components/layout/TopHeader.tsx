@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Send, Heart, Users, Download, Menu, Plus } from 'lucide-react';
+import { Send, Heart, Users, Download, Menu, Plus, Crown } from 'lucide-react';
 import { useSocial } from '../../context/SocialContext';
 
 export const TopHeader: React.FC = () => {
@@ -12,6 +12,8 @@ export const TopHeader: React.FC = () => {
     switchUser,
     setIsCreateModalOpen,
     setIsDownloadModalOpen,
+    isSubscribed,
+    setIsSubscriptionModalOpen,
   } = useSocial();
 
   const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
@@ -42,7 +44,21 @@ export const TopHeader: React.FC = () => {
       </div>
 
       {/* Right Actions */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5 sm:gap-2">
+        {/* VIP Pass Button */}
+        <button
+          onClick={() => setIsSubscriptionModalOpen(true)}
+          className={`px-2.5 py-1.5 rounded-full text-[10px] font-extrabold flex items-center gap-1 shadow transition-all ${
+            isSubscribed
+              ? 'bg-amber-400 text-black'
+              : 'bg-amber-400/20 text-amber-300 border border-amber-400/30 hover:bg-amber-400/30'
+          }`}
+          title="PlayHub VIP Membership"
+        >
+          <Crown className="w-3 h-3 fill-current" />
+          <span>{isSubscribed ? 'VIP' : 'Pass'}</span>
+        </button>
+
         {/* Upload Video / Create Button */}
         <button
           onClick={() => setIsCreateModalOpen(true)}

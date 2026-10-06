@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { useSocial } from '../../context/SocialContext';
 import { Post } from '../../types';
+import { PlayHubVideoPlayer } from '../common/PlayHubVideoPlayer';
 
 export const FeedView: React.FC = () => {
   const {
@@ -391,61 +392,18 @@ export const FeedView: React.FC = () => {
 
                 {/* Post Media: Supports Native Video Player or Photos */}
                 <div
-                  className="relative aspect-square sm:aspect-[4/3] bg-black flex items-center justify-center overflow-hidden cursor-pointer select-none group"
+                  className="relative aspect-square sm:aspect-[4/3] bg-black flex items-center justify-center overflow-hidden select-none group"
                   onDoubleClick={() => handleDoubleTapLike(post.id)}
                 >
                   {isVideo ? (
-                    <div className="relative w-full h-full flex items-center justify-center">
-                      <video
-                        id={`post-video-${post.id}`}
-                        src={post.media[0]?.url}
-                        loop
-                        playsInline
-                        muted={isMuted}
-                        className="w-full h-full object-cover"
-                        onClick={e => {
-                          e.stopPropagation();
-                          toggleVideoPlayback(post.id, e.currentTarget);
-                        }}
-                      />
-
-                      {/* Video Play/Pause Floating Icon Button */}
-                      <button
-                        type="button"
-                        onClick={e => {
-                          e.stopPropagation();
-                          const el = document.getElementById(`post-video-${post.id}`) as HTMLVideoElement;
-                          toggleVideoPlayback(post.id, el);
-                        }}
-                        className={`absolute inset-0 flex items-center justify-center transition-opacity ${
-                          isCurrentPlaying ? 'opacity-0 group-hover:opacity-100 bg-black/30' : 'opacity-100 bg-black/40'
-                        }`}
-                      >
-                        <div className="w-14 h-14 rounded-full bg-white text-black flex items-center justify-center shadow-2xl hover:scale-110 transition-transform">
-                          {isCurrentPlaying ? <Pause className="w-6 h-6 fill-black" /> : <Play className="w-6 h-6 fill-black ml-1" />}
-                        </div>
-                      </button>
-
-                      {/* Video Controls Bar */}
-                      <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-xs text-white z-20">
-                        <button
-                          type="button"
-                          onClick={e => {
-                            e.stopPropagation();
-                            const el = document.getElementById(`post-video-${post.id}`) as HTMLVideoElement;
-                            toggleVideoMute(post.id, el);
-                          }}
-                          className="p-2 rounded-full bg-black/70 hover:bg-black text-white backdrop-blur-md border border-white/10 transition-colors"
-                        >
-                          {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-                        </button>
-
-                        <div className="px-3 py-1 rounded-full bg-black/70 backdrop-blur-md border border-white/10 text-[10px] font-bold uppercase tracking-wider text-neutral-300 flex items-center gap-1.5">
-                          <Film className="w-3 h-3" />
-                          <span>Video Clip</span>
-                        </div>
-                      </div>
-                    </div>
+                    <PlayHubVideoPlayer
+                      src={post.media[0]?.url}
+                      poster={post.media[0]?.thumbnailUrl}
+                      aspectRatio="4:3"
+                      isSubscriberOnly={post.isSubscriberOnly || post.media[0]?.isSubscriberOnly}
+                      title={post.caption}
+                      authorName={post.author.displayName}
+                    />
                   ) : (
                     <img
                       src={post.media[0]?.url}
