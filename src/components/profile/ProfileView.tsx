@@ -18,6 +18,8 @@ import {
   Video,
   Sparkles,
   Crown,
+  Trash2,
+  UserPlus,
 } from 'lucide-react';
 import { useSocial } from '../../context/SocialContext';
 import { Post, Reel } from '../../types';
@@ -36,6 +38,10 @@ export const ProfileView: React.FC = () => {
     startDirectMessage,
     setIsCreateModalOpen,
     setCurrentView,
+    setIsAuthModalOpen,
+    setIsDeleteAccountModalOpen,
+    setUserToDeleteId,
+    setIsSubscriptionModalOpen,
   } = useSocial();
 
   const [activeTab, setActiveTab] = useState<'posts' | 'reels' | 'saved'>('posts');
@@ -70,15 +76,15 @@ export const ProfileView: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto px-3 sm:px-6 py-6 space-y-6 select-none text-white">
-      {/* Top Header matching "Overview Favorite" in oneImage.webp */}
+      {/* Top Header matching Instagram typography scale */}
       <div className="flex items-center justify-between pb-2 border-b border-white/10">
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-4 sm:gap-6">
           <button
             onClick={() => {
               setOverviewMode('overview');
               setActiveTab('posts');
             }}
-            className={`font-display font-extrabold text-2xl tracking-tight transition-colors ${
+            className={`font-semibold text-base sm:text-lg tracking-tight transition-colors ${
               overviewMode === 'overview' ? 'text-white' : 'text-neutral-500 hover:text-white'
             }`}
           >
@@ -89,23 +95,56 @@ export const ProfileView: React.FC = () => {
               setOverviewMode('favorite');
               setActiveTab('saved');
             }}
-            className={`font-display font-extrabold text-2xl tracking-tight transition-colors ${
+            className={`font-semibold text-base sm:text-lg tracking-tight transition-colors ${
               overviewMode === 'favorite' ? 'text-white' : 'text-neutral-500 hover:text-white'
             }`}
           >
-            Favorite
+            Saved Posts
           </button>
         </div>
 
-        {isSelf && (
-          <button
-            onClick={() => setIsEditModalOpen(true)}
-            className="p-2.5 rounded-full bg-[#181818] border border-white/10 text-neutral-300 hover:text-white transition-colors"
-            title="Edit Profile"
-          >
-            <Edit3 className="w-4 h-4" />
-          </button>
-        )}
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          {isSelf ? (
+            <>
+              <button
+                onClick={() => setIsEditModalOpen(true)}
+                className="px-3 py-1.5 rounded-full bg-[#181818] border border-white/10 text-neutral-200 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                title="Edit Profile"
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Edit Profile</span>
+              </button>
+
+              <button
+                onClick={() => setIsAuthModalOpen(true)}
+                className="px-3 py-1.5 rounded-full bg-[#181818] border border-white/10 text-neutral-200 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                title="Create or Switch Account"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Accounts</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setUserToDeleteId(currentUser.id);
+                  setIsDeleteAccountModalOpen(true);
+                }}
+                className="p-1.5 rounded-full bg-[#181818] border border-red-500/20 text-neutral-400 hover:text-red-400 hover:border-red-500/40 transition-colors"
+                title="Delete Account"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => setIsAuthModalOpen(true)}
+              className="px-3 py-1.5 rounded-full bg-white text-black text-xs font-bold hover:bg-neutral-200 transition-colors flex items-center gap-1.5"
+            >
+              <UserPlus className="w-3.5 h-3.5" />
+              <span>Switch / Join</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Main Account Metrics Card (Mirroring Accounts Card & $45689.05 in oneImage.webp) */}
@@ -508,6 +547,29 @@ export const ProfileView: React.FC = () => {
                   onChange={e => setEditIsPrivate(e.target.checked)}
                   className="w-4 h-4 accent-white cursor-pointer"
                 />
+              </div>
+
+              <div className="pt-2 border-t border-white/5 flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-bold text-red-400">
+                    Delete Account
+                  </div>
+                  <div className="text-[10px] text-neutral-400">
+                    Permanently delete account and all uploaded posts
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsEditModalOpen(false);
+                    setUserToDeleteId(currentUser.id);
+                    setIsDeleteAccountModalOpen(true);
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-red-600/10 hover:bg-red-600/20 text-red-400 text-xs font-semibold border border-red-500/20 transition-colors flex items-center gap-1.5"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Delete</span>
+                </button>
               </div>
 
               <div className="flex justify-end gap-2 pt-2">

@@ -20,6 +20,8 @@ import { StoriesViewerModal } from './components/stories/StoriesViewerModal';
 import { CreatePostModal } from './components/create/CreatePostModal';
 import { DownloadFolderModal } from './components/common/DownloadFolderModal';
 import { SubscriptionModal } from './components/common/SubscriptionModal';
+import { AuthModal } from './components/common/AuthModal';
+import { DeleteAccountModal } from './components/common/DeleteAccountModal';
 
 const AppContent: React.FC = () => {
   const { currentView } = useSocial();
@@ -68,6 +70,8 @@ const AppContent: React.FC = () => {
       <CreatePostModal />
       <DownloadFolderModal />
       <SubscriptionModal />
+      <AuthModal />
+      <DeleteAccountModal />
     </div>
   );
 };

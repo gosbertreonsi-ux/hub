@@ -53,7 +53,16 @@ const PRESET_VIDEOS = [
 ];
 
 export const CreatePostModal: React.FC = () => {
-  const { isCreateModalOpen, setIsCreateModalOpen, createPost, createReel, currentUser } = useSocial();
+  const {
+    isCreateModalOpen,
+    setIsCreateModalOpen,
+    createPost,
+    createReel,
+    currentUser,
+    isSubscribed,
+    setIsSubscriptionModalOpen,
+    subscribeUser,
+  } = useSocial();
 
   const [mediaKind, setMediaKind] = useState<'video' | 'image'>('video');
   const [postFormat, setPostFormat] = useState<'post' | 'reel'>('reel');
@@ -145,6 +154,11 @@ export const CreatePostModal: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!isSubscribed) {
+      setIsSubscriptionModalOpen(true);
+      return;
+    }
 
     const tags = hashtagsInput
       .split(/\s+/)
@@ -370,6 +384,24 @@ export const CreatePostModal: React.FC = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+            {/* Creator Subscription Status Banner */}
+            {!isSubscribed && (
+              <div className="p-3 rounded-2xl bg-gradient-to-r from-amber-500/15 to-yellow-500/10 border border-amber-400/30 text-amber-300 text-xs flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Crown className="w-4 h-4 text-amber-400 shrink-0" />
+                  <div className="text-[11px] leading-tight text-neutral-200">
+                    <span className="font-bold text-amber-300">Creator Pass Required:</span> Subscribed members can publish posts and reels.
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => subscribeUser('monthly')}
+                  className="shrink-0 px-2.5 py-1 rounded-full bg-amber-400 text-black font-extrabold text-[10px] hover:bg-amber-300 transition-colors"
+                >
+                  Unlock Free
+                </button>
+              </div>
+            )}
             {/* Format Selector if Video (Reel vs Post) */}
             {mediaKind === 'video' && (
               <div className="space-y-1.5">
@@ -560,9 +592,22 @@ export const CreatePostModal: React.FC = () => {
 
               <button
                 type="submit"
-                className="px-7 py-3 rounded-full bg-white hover:bg-neutral-200 text-black font-extrabold text-xs flex items-center gap-2 transition-all shadow-xl active:scale-95"
+                className={`px-7 py-3 rounded-full font-extrabold text-xs flex items-center gap-2 transition-all shadow-xl active:scale-95 ${
+                  !isSubscribed
+                    ? 'bg-amber-400 hover:bg-amber-300 text-black shadow-amber-400/20'
+                    : 'bg-white hover:bg-neutral-200 text-black'
+                }`}
               >
-                <span>{mediaKind === 'video' ? (postFormat === 'reel' ? 'Publish Reel' : 'Publish Video') : 'Publish Photo'}</span>
+                {!isSubscribed && <Crown className="w-4 h-4 fill-black" />}
+                <span>
+                  {!isSubscribed
+                    ? 'Subscribe to Post (VIP Required)'
+                    : mediaKind === 'video'
+                    ? postFormat === 'reel'
+                      ? 'Publish Reel'
+                      : 'Publish Video'
+                    : 'Publish Photo'}
+                </span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>

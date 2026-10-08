@@ -85,8 +85,11 @@ export const ReelsView: React.FC = () => {
           {/* Top Bar */}
           <div className="relative z-20 p-5 flex items-center justify-between text-white pointer-events-auto">
             <div className="flex items-center gap-2">
-              <span className="font-display font-black text-sm tracking-widest uppercase">
-                MIZIZI REELS
+              <span className="font-serif italic font-bold text-base tracking-tight text-white">
+                Reels
+              </span>
+              <span className="text-[10px] text-neutral-400 font-semibold">
+                · Mizizi
               </span>
               {currentReel.isSubscriberOnly && (
                 <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-400 text-black flex items-center gap-1 shadow">

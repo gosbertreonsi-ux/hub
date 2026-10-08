@@ -128,24 +128,21 @@ export const FeedView: React.FC = () => {
 
       {/* Main Center Stream */}
       <div className="w-full max-w-[620px] space-y-5">
-        {/* Sleek Top Stepper / Filter Bar inspired by oneImage.webp */}
-        <div className="p-4 sm:p-5 rounded-[28px] bg-[#121212] border border-white/10 flex items-center justify-between shadow-xl">
-          <div className="flex items-center gap-3">
-            <h1 className="font-display font-extrabold text-2xl text-white tracking-tight">
-              Overview
-            </h1>
-            <span className="text-sm font-semibold text-neutral-500">
-              · Feed
+        {/* Sleek Top Filter Bar matching Instagram scale */}
+        <div className="p-3.5 sm:p-4 rounded-2xl bg-[#121212] border border-white/10 flex items-center justify-between shadow-lg">
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-base text-white tracking-tight">
+              Feed
             </span>
           </div>
 
-          {/* Stepper / Mode Toggle (Buttons matching reference screenshot) */}
-          <div className="flex items-center gap-1.5 p-1 bg-[#1c1c1c] rounded-full border border-white/10">
+          {/* Stepper / Mode Toggle */}
+          <div className="flex items-center gap-1 p-1 bg-[#1c1c1c] rounded-full border border-white/10">
             <button
               onClick={() => setFeedMode('discover')}
-              className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
+              className={`px-3.5 py-1 rounded-full text-xs font-semibold transition-all ${
                 feedMode === 'discover'
-                  ? 'bg-white text-black shadow-md'
+                  ? 'bg-white text-black font-bold shadow'
                   : 'text-neutral-400 hover:text-white'
               }`}
             >
@@ -153,9 +150,9 @@ export const FeedView: React.FC = () => {
             </button>
             <button
               onClick={() => setFeedMode('following')}
-              className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
+              className={`px-3.5 py-1 rounded-full text-xs font-semibold transition-all ${
                 feedMode === 'following'
-                  ? 'bg-white text-black shadow-md'
+                  ? 'bg-white text-black font-bold shadow'
                   : 'text-neutral-400 hover:text-white'
               }`}
             >

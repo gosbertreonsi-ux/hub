@@ -81,7 +81,7 @@ export const SubscriptionModal: React.FC = () => {
           </h2>
 
           <p className="text-xs text-neutral-400 mt-1 max-w-md mx-auto">
-            <span className="text-white font-semibold">Entering is 100% Free</span>. Viewing full 4K creator videos, masterclasses, and exclusive reels requires an active VIP subscription.
+            <span className="text-white font-semibold">Free to Enter & Create Account</span>. Viewing full 4K creator videos and <span className="text-amber-300 font-semibold">publishing posts & reels</span> requires an active VIP creator pass.
           </p>
 
           {/* Quick Instant Test Toggle */}
@@ -134,6 +134,10 @@ export const SubscriptionModal: React.FC = () => {
               </div>
 
               <div className="mt-3 pt-3 border-t border-white/10 text-[11px] text-neutral-300 space-y-1">
+                <div className="flex items-center gap-1.5">
+                  <Check className="w-3 h-3 text-amber-400" />
+                  <span>Publish Unlimited Posts & Reels</span>
+                </div>
                 <div className="flex items-center gap-1.5">
                   <Check className="w-3 h-3 text-amber-400" />
                   <span>Unlimited 4K Video Streams</span>

@@ -49,9 +49,16 @@ interface SocialContextType {
   switchUser: (userId: string) => void;
   updateCurrentUserProfile: (updates: Partial<User>) => void;
   login: (emailOrUsername: string) => boolean;
-  register: (username: string, displayName: string, email: string) => boolean;
+  register: (username: string, displayName: string, email: string, avatarUrl?: string, bio?: string, role?: UserRole) => boolean;
+  deleteAccount: (userId?: string) => void;
   logout: () => void;
   allUsers: User[];
+  isAuthModalOpen: boolean;
+  setIsAuthModalOpen: (open: boolean) => void;
+  isDeleteAccountModalOpen: boolean;
+  setIsDeleteAccountModalOpen: (open: boolean) => void;
+  userToDeleteId: string | null;
+  setUserToDeleteId: (id: string | null) => void;
 
   // Posts & Interactions
   posts: Post[];
@@ -220,6 +227,9 @@ export const SocialProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] = useState(false);
+  const [userToDeleteId, setUserToDeleteId] = useState<string | null>(null);
 
   // Subscription state
   const isSubscribed =
@@ -311,25 +321,97 @@ export const SocialProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return false;
   };
 
-  const register = (username: string, displayName: string, email: string) => {
+  const register = (
+    username: string,
+    displayName: string,
+    email: string,
+    avatarUrl?: string,
+    bio?: string,
+    role?: UserRole
+  ) => {
+    const cleanUsername = username.toLowerCase().replace(/[^a-z0-9_]/g, '') || `user_${Date.now()}`;
     const newUser: User = {
       id: `user_${Date.now()}`,
-      username: username.toLowerCase().replace(/\s+/g, '_'),
-      displayName: displayName || username,
-      email: email,
-      avatarUrl: `https://api.dicebear.com/7.x/identicon/svg?seed=${username}`,
-      bio: 'New explorer on MIZIZI SOCIAL 🌍✨',
-      role: 'USER',
+      username: cleanUsername,
+      displayName: displayName.trim() || cleanUsername,
+      email: email.trim() || `${cleanUsername}@mizizi.app`,
+      avatarUrl: avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${cleanUsername}`,
+      bio: bio?.trim() || 'New explorer on MIZIZI SOCIAL 🌍✨',
+      role: role || 'USER',
       isPrivate: false,
       followersCount: 0,
       followingCount: 0,
       postsCount: 0,
       status: 'ACTIVE',
+      subscriptionStatus: 'FREE', // Free entry: Anyone can create an account! Posting requires subscription.
       createdAt: new Date().toISOString(),
     };
     setAllUsers(prev => [newUser, ...prev]);
     setCurrentUserId(newUser.id);
+    setViewingProfileUserId(newUser.id);
+    setIsAuthModalOpen(false);
     return true;
+  };
+
+  const deleteAccount = (userId?: string) => {
+    const idToDelete = userId || userToDeleteId || currentUser.id;
+
+    // 1. Remove all posts authored by user
+    setPosts(prev => prev.filter(p => p.author.id !== idToDelete && p.userId !== idToDelete));
+
+    // 2. Remove all reels by user
+    setReels(prev => prev.filter(r => r.userId !== idToDelete));
+
+    // 3. Remove all stories by user
+    setStories(prev => prev.filter(s => s.userId !== idToDelete));
+
+    // 4. Clean comments by user from remaining posts
+    setPosts(prev =>
+      prev.map(p => ({
+        ...p,
+        comments: p.comments.filter(c => c.userId !== idToDelete),
+        commentsCount: p.comments.filter(c => c.userId !== idToDelete).length,
+      }))
+    );
+
+    // 5. Remove from following list
+    setFollowingUserIds(prev => prev.filter(id => id !== idToDelete));
+
+    // 6. Remove user from allUsers
+    const remainingUsers = allUsers.filter(u => u.id !== idToDelete);
+    setAllUsers(remainingUsers);
+
+    // 7. If deleting current user, switch to first remaining user or generate a clean guest account
+    if (currentUserId === idToDelete) {
+      if (remainingUsers.length > 0) {
+        setCurrentUserId(remainingUsers[0].id);
+        setViewingProfileUserId(remainingUsers[0].id);
+      } else {
+        const freshUser: User = {
+          id: `user_${Date.now()}`,
+          username: 'mizizi_guest',
+          displayName: 'Guest Explorer',
+          email: 'guest@mizizi.app',
+          avatarUrl: 'https://api.dicebear.com/7.x/identicon/svg?seed=guest',
+          bio: 'Exploring MIZIZI SOCIAL 🌍',
+          role: 'USER',
+          isPrivate: false,
+          followersCount: 0,
+          followingCount: 0,
+          postsCount: 0,
+          status: 'ACTIVE',
+          subscriptionStatus: 'FREE',
+          createdAt: new Date().toISOString(),
+        };
+        setAllUsers([freshUser]);
+        setCurrentUserId(freshUser.id);
+        setViewingProfileUserId(freshUser.id);
+      }
+      setCurrentView('feed');
+    }
+
+    setIsDeleteAccountModalOpen(false);
+    setUserToDeleteId(null);
   };
 
   const logout = () => {
@@ -832,8 +914,15 @@ export const SocialProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         updateCurrentUserProfile,
         login,
         register,
+        deleteAccount,
         logout,
         allUsers,
+        isAuthModalOpen,
+        setIsAuthModalOpen,
+        isDeleteAccountModalOpen,
+        setIsDeleteAccountModalOpen,
+        userToDeleteId,
+        setUserToDeleteId,
         posts,
         toggleLikePost,
         toggleSavePost,
