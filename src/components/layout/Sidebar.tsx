@@ -20,6 +20,7 @@ import {
   UserPlus,
   LogOut,
   Settings,
+  Database,
 } from 'lucide-react';
 import { useSocial } from '../../context/SocialContext';
 
@@ -38,6 +39,7 @@ export const Sidebar: React.FC = () => {
     setIsAuthModalOpen,
     setIsDeleteAccountModalOpen,
     setUserToDeleteId,
+    setIsDbModalOpen,
     theme,
     toggleTheme,
   } = useSocial();
@@ -259,6 +261,20 @@ export const Sidebar: React.FC = () => {
             >
               <ShieldAlert className="w-4 h-4 text-neutral-400" />
               <span>Safety & Admin</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setIsMoreMenuOpen(false);
+                setIsDbModalOpen(true);
+              }}
+              className="w-full flex items-center justify-between p-2.5 rounded-xl text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 transition-colors font-medium text-left"
+            >
+              <div className="flex items-center gap-3">
+                <Database className="w-4 h-4 text-emerald-400" />
+                <span>Live Database & Docker</span>
+              </div>
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             </button>
 
             <button

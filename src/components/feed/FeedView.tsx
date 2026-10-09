@@ -24,10 +24,15 @@ import {
 import { useSocial } from '../../context/SocialContext';
 import { Post } from '../../types';
 import { PlayHubVideoPlayer } from '../common/PlayHubVideoPlayer';
+import { Flame, Crown, MapPin, Zap, Database, SlidersHorizontal } from 'lucide-react';
 
 export const FeedView: React.FC = () => {
   const {
     posts,
+    feedAlgorithm,
+    setFeedAlgorithm,
+    selectedCategory,
+    setSelectedCategory,
     currentUser,
     allUsers,
     followingUserIds,
@@ -44,9 +49,9 @@ export const FeedView: React.FC = () => {
     startDirectMessage,
     setIsCreateModalOpen,
     setCurrentView,
+    setIsDbModalOpen,
   } = useSocial();
 
-  const [feedMode, setFeedMode] = useState<'discover' | 'following'>('discover');
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   const [activeMenuPostId, setActiveMenuPostId] = useState<string | null>(null);
   const [showHeartAnim, setShowHeartAnim] = useState<string | null>(null);
@@ -56,9 +61,19 @@ export const FeedView: React.FC = () => {
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
   const [mutedVideos, setMutedVideos] = useState<Record<string, boolean>>({});
 
-  // Filter posts based on feedMode
+  const CATEGORIES = [
+    { id: 'all', label: 'All' },
+    { id: 'Fashion & Style', label: 'Fashion & Couture' },
+    { id: 'Wildlife & Nature', label: 'Serengeti & Wildlife' },
+    { id: 'Travel & Nature', label: 'Zanzibar & Travel' },
+    { id: 'Architecture & Design', label: 'Architecture' },
+    { id: 'Cuisine & Gastronomy', label: 'Swahili Food' },
+    { id: 'Technology & Startups', label: 'Tech & AI' },
+  ];
+
+  // Filter posts based on feedAlgorithm if following is picked
   const displayedPosts = posts.filter(post => {
-    if (feedMode === 'following') {
+    if (feedAlgorithm === 'following') {
       return followingUserIds.includes(post.author.id) || post.author.id === currentUser.id;
     }
     return true;
@@ -127,37 +142,108 @@ export const FeedView: React.FC = () => {
       )}
 
       {/* Main Center Stream */}
-      <div className="w-full max-w-[620px] space-y-5">
-        {/* Sleek Top Filter Bar matching Instagram scale */}
-        <div className="p-3.5 sm:p-4 rounded-2xl bg-[#121212] border border-white/10 flex items-center justify-between shadow-lg">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-base text-white tracking-tight">
-              Feed
-            </span>
+      <div className="w-full max-w-[620px] space-y-4">
+        {/* Sleek Algorithmic Engine Header Bar */}
+        <div className="p-3.5 sm:p-4 rounded-2xl bg-[#121212] border border-white/10 shadow-lg space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-sm sm:text-base text-white tracking-tight flex items-center gap-1.5">
+                <SlidersHorizontal className="w-4 h-4 text-amber-400" />
+                Algorithm Feed
+              </span>
+            </div>
+
+            <button
+              onClick={() => setIsDbModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[11px] font-semibold transition-all shadow-sm active:scale-95"
+              title="View live database connection and Docker status"
+            >
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <Database className="w-3 h-3" />
+              <span>Live DB & Docker</span>
+            </button>
           </div>
 
-          {/* Stepper / Mode Toggle */}
-          <div className="flex items-center gap-1 p-1 bg-[#1c1c1c] rounded-full border border-white/10">
+          {/* Algorithmic Modes Tabs */}
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
             <button
-              onClick={() => setFeedMode('discover')}
-              className={`px-3.5 py-1 rounded-full text-xs font-semibold transition-all ${
-                feedMode === 'discover'
+              onClick={() => setFeedAlgorithm('for-you')}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold shrink-0 flex items-center gap-1.5 transition-all ${
+                feedAlgorithm === 'for-you'
                   ? 'bg-white text-black font-bold shadow'
-                  : 'text-neutral-400 hover:text-white'
+                  : 'bg-[#1c1c1c] text-neutral-400 hover:text-white border border-white/5'
               }`}
             >
-              For You
+              <Zap className="w-3.5 h-3.5 fill-current" />
+              <span>For You</span>
             </button>
+
             <button
-              onClick={() => setFeedMode('following')}
-              className={`px-3.5 py-1 rounded-full text-xs font-semibold transition-all ${
-                feedMode === 'following'
+              onClick={() => setFeedAlgorithm('following')}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold shrink-0 flex items-center gap-1.5 transition-all ${
+                feedAlgorithm === 'following'
                   ? 'bg-white text-black font-bold shadow'
-                  : 'text-neutral-400 hover:text-white'
+                  : 'bg-[#1c1c1c] text-neutral-400 hover:text-white border border-white/5'
               }`}
             >
-              Following ({followingUserIds.length})
+              <span>Following</span>
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-black/20 text-current">
+                {followingUserIds.length}
+              </span>
             </button>
+
+            <button
+              onClick={() => setFeedAlgorithm('trending')}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold shrink-0 flex items-center gap-1.5 transition-all ${
+                feedAlgorithm === 'trending'
+                  ? 'bg-white text-black font-bold shadow'
+                  : 'bg-[#1c1c1c] text-neutral-400 hover:text-white border border-white/5'
+              }`}
+            >
+              <Flame className="w-3.5 h-3.5 text-orange-400 fill-orange-400" />
+              <span>Trending</span>
+            </button>
+
+            <button
+              onClick={() => setFeedAlgorithm('exclusive')}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold shrink-0 flex items-center gap-1.5 transition-all ${
+                feedAlgorithm === 'exclusive'
+                  ? 'bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-extrabold shadow'
+                  : 'bg-[#1c1c1c] text-amber-300 hover:text-amber-200 border border-amber-500/20'
+              }`}
+            >
+              <Crown className="w-3.5 h-3.5 fill-current" />
+              <span>VIP Pass</span>
+            </button>
+
+            <button
+              onClick={() => setFeedAlgorithm('local')}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold shrink-0 flex items-center gap-1.5 transition-all ${
+                feedAlgorithm === 'local'
+                  ? 'bg-white text-black font-bold shadow'
+                  : 'bg-[#1c1c1c] text-neutral-400 hover:text-white border border-white/5'
+              }`}
+            >
+              <MapPin className="w-3.5 h-3.5 text-cyan-400" />
+              <span>East Africa</span>
+            </button>
+          </div>
+
+          {/* Category Filter Pills */}
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-1 border-t border-white/5">
+            {CATEGORIES.map(cat => (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-medium shrink-0 transition-colors ${
+                  selectedCategory === cat.id
+                    ? 'bg-neutral-800 text-amber-300 border border-amber-500/40 font-semibold'
+                    : 'text-neutral-400 hover:text-neutral-200 hover:bg-neutral-900'
+                }`}
+              >
+                {cat.label}
+              </button>
+            ))}
           </div>
         </div>
 

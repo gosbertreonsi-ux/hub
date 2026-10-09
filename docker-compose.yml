@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  # --------------------------------------------------------------------------
+  # 1. PostgreSQL Database Service
+  # --------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: mizizi_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: mizizi_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d mizizi_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --------------------------------------------------------------------------
+  # 2. MIZIZI SOCIAL Full-Stack Application
+  # --------------------------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mizizi_app
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgres://postgres:postgrespassword@postgres:5432/mizizi_db
+      # Add your live payment keys below or in a .env file:
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-pk_test_sample}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_sample}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-whsec_sample}
+      PAYPAL_CLIENT_ID: ${PAYPAL_CLIENT_ID:-sample_paypal}
+      PAYPAL_CLIENT_SECRET: ${PAYPAL_CLIENT_SECRET:-sample_secret}
+      MPESA_CONSUMER_KEY: ${MPESA_CONSUMER_KEY:-sample_mpesa}
+      MPESA_CONSUMER_SECRET: ${MPESA_CONSUMER_SECRET:-sample_mpesa_secret}
+    ports:
+      - "3000:3000"
+    volumes:
+      # Persistent storage for uploaded photos/videos and database backups
+      - ./uploads:/app/uploads
+      - ./data:/app/data
+
+volumes:
+  pgdata:
+    driver: local

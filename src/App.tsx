@@ -22,6 +22,7 @@ import { DownloadFolderModal } from './components/common/DownloadFolderModal';
 import { SubscriptionModal } from './components/common/SubscriptionModal';
 import { AuthModal } from './components/common/AuthModal';
 import { DeleteAccountModal } from './components/common/DeleteAccountModal';
+import { DatabaseStatusModal } from './components/common/DatabaseStatusModal';
 
 const AppContent: React.FC = () => {
   const { currentView } = useSocial();
@@ -72,6 +73,7 @@ const AppContent: React.FC = () => {
       <SubscriptionModal />
       <AuthModal />
       <DeleteAccountModal />
+      <DatabaseStatusModal />
     </div>
   );
 };

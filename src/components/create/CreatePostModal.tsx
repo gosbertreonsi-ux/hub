@@ -17,9 +17,12 @@ import {
   ArrowRight,
   Crown,
   Lock,
+  Database,
+  CloudUpload,
 } from 'lucide-react';
 import { useSocial } from '../../context/SocialContext';
 import { generateSocialCaption } from '../../services/geminiService';
+import { api } from '../../services/api';
 
 import imgZanzibar from '../../assets/images/post_zanzibar_sunset_1791302420289.jpg';
 import imgFashion from '../../assets/images/post_african_fashion_1791302431551.jpg';
@@ -86,10 +89,12 @@ export const CreatePostModal: React.FC = () => {
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [selectedTone, setSelectedTone] = useState<'aesthetic' | 'inspirational' | 'playful'>('aesthetic');
   const [isPaywallProtected, setIsPaywallProtected] = useState(true);
+  const [isUploadingToDb, setIsUploadingToDb] = useState(false);
+  const [dbStoragePath, setDbStoragePath] = useState<string | null>(null);
 
   if (!isCreateModalOpen) return null;
 
-  const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setUploadedVideoName(file.name);
@@ -97,10 +102,24 @@ export const CreatePostModal: React.FC = () => {
       const blobUrl = URL.createObjectURL(file);
       setSelectedVideo(blobUrl);
       setIsPlaying(true);
+
+      // Upload directly to server and database!
+      setIsUploadingToDb(true);
+      try {
+        const res = await api.uploadMedia(file);
+        if (res?.url) {
+          setSelectedVideo(res.url);
+          setDbStoragePath(res.url);
+        }
+      } catch (err: any) {
+        console.warn('Direct video upload notice:', err.message);
+      } finally {
+        setIsUploadingToDb(false);
+      }
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setMediaKind('image');
@@ -111,6 +130,20 @@ export const CreatePostModal: React.FC = () => {
         }
       };
       reader.readAsDataURL(file);
+
+      // Direct upload to backend server storage & media table!
+      setIsUploadingToDb(true);
+      try {
+        const res = await api.uploadMedia(file);
+        if (res?.url) {
+          setSelectedImage(res.url);
+          setDbStoragePath(res.url);
+        }
+      } catch (err: any) {
+        console.warn('Direct photo upload notice:', err.message);
+      } finally {
+        setIsUploadingToDb(false);
+      }
     }
   };
 
@@ -229,6 +262,21 @@ export const CreatePostModal: React.FC = () => {
 
           {/* Media Viewport */}
           <div className="relative aspect-[4/5] sm:aspect-square w-full rounded-2xl overflow-hidden bg-black border border-white/10 flex items-center justify-center group">
+            {/* Real Database Storage Status */}
+            {isUploadingToDb && (
+              <div className="absolute inset-0 z-30 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center gap-2 text-white">
+                <Loader2 className="w-7 h-7 animate-spin text-amber-400" />
+                <span className="text-xs font-semibold">Uploading directly to server storage & DB...</span>
+                <span className="text-[10px] text-neutral-400 font-mono">Writing record to media table</span>
+              </div>
+            )}
+
+            {dbStoragePath && !isUploadingToDb && (
+              <div className="absolute top-3 left-3 z-20 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-[10px] font-semibold text-emerald-300 backdrop-blur-md shadow-lg">
+                <Database className="w-3 h-3 text-emerald-400" />
+                <span>DB Synced: {dbStoragePath.slice(0, 24)}...</span>
+              </div>
+            )}
             {mediaKind === 'video' ? (
               <>
                 <video

@@ -15,6 +15,7 @@ import {
   Sun,
   LogOut,
   Users,
+  Database,
 } from 'lucide-react';
 import { useSocial } from '../../context/SocialContext';
 
@@ -33,6 +34,7 @@ export const TopHeader: React.FC = () => {
     setIsAuthModalOpen,
     setIsDeleteAccountModalOpen,
     setUserToDeleteId,
+    setIsDbModalOpen,
     theme,
     toggleTheme,
     setViewingProfileUserId,
@@ -232,6 +234,20 @@ export const TopHeader: React.FC = () => {
                 >
                   <ShieldAlert className="w-4 h-4 text-neutral-400" />
                   <span>Safety & Admin Dashboard</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    setIsDbModalOpen(true);
+                  }}
+                  className="w-full flex items-center justify-between p-2.5 rounded-xl text-xs font-semibold text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <Database className="w-4 h-4 text-emerald-400" />
+                    <span>Live Database & Docker Status</span>
+                  </div>
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 </button>
 
                 <button

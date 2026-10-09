@@ -20,6 +20,9 @@ import {
   Crown,
   Trash2,
   UserPlus,
+  Receipt,
+  CreditCard,
+  FileText,
 } from 'lucide-react';
 import { useSocial } from '../../context/SocialContext';
 import { Post, Reel } from '../../types';
@@ -42,9 +45,11 @@ export const ProfileView: React.FC = () => {
     setIsDeleteAccountModalOpen,
     setUserToDeleteId,
     setIsSubscriptionModalOpen,
+    isSubscribed,
+    paymentHistory,
   } = useSocial();
 
-  const [activeTab, setActiveTab] = useState<'posts' | 'reels' | 'saved'>('posts');
+  const [activeTab, setActiveTab] = useState<'posts' | 'reels' | 'saved' | 'billing'>('posts');
   const [overviewMode, setOverviewMode] = useState<'overview' | 'favorite'>('overview');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
@@ -338,6 +343,20 @@ export const ProfileView: React.FC = () => {
           <Bookmark className="w-4 h-4" />
           <span>Saved ({userSavedPosts.length})</span>
         </button>
+
+        {isSelf && (
+          <button
+            onClick={() => setActiveTab('billing')}
+            className={`pb-3 px-5 text-xs font-bold border-b-2 transition-colors flex items-center gap-2 ${
+              activeTab === 'billing'
+                ? 'border-amber-400 text-amber-300'
+                : 'border-transparent text-neutral-500 hover:text-white'
+            }`}
+          >
+            <Receipt className="w-4 h-4 text-amber-400" />
+            <span>Billing & Receipts</span>
+          </button>
+        )}
       </div>
 
       {/* Grid Content */}
@@ -460,6 +479,84 @@ export const ProfileView: React.FC = () => {
               No saved posts in your favorite collection.
             </div>
           )}
+        </div>
+      )}
+
+      {activeTab === 'billing' && (
+        <div className="space-y-4">
+          <div className="p-5 rounded-2xl bg-[#141414] border border-amber-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+                <Crown className="w-6 h-6 stroke-[2.5]" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-sm text-white">Membership Tier</span>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                    isSubscribed ? 'bg-amber-400 text-black' : 'bg-neutral-800 text-neutral-400'
+                  }`}>
+                    {currentUser.subscriptionStatus || 'FREE EXPLORER'}
+                  </span>
+                </div>
+                <p className="text-xs text-neutral-400 mt-0.5">
+                  {isSubscribed
+                    ? 'Active VIP Pass: Unlimited 4K posting, full video views & priority algorithmic feed.'
+                    : 'Free Explorer tier. Upgrade to publish posts, video reels & access 4K streams.'}
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setIsSubscriptionModalOpen(true)}
+              className="px-5 py-2.5 rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 hover:from-amber-300 hover:to-yellow-200 text-black font-extrabold text-xs shrink-0 transition-transform active:scale-95 shadow-md cursor-pointer"
+            >
+              {isSubscribed ? 'Manage / Renew VIP' : 'Upgrade to VIP ($4.99/mo)'}
+            </button>
+          </div>
+
+          {/* Transaction Ledger Table */}
+          <div className="p-4 rounded-2xl bg-[#141414] border border-white/10 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-xs text-white flex items-center gap-1.5">
+                <Receipt className="w-4 h-4 text-amber-400" />
+                Verified Payment Ledger & Invoices
+              </span>
+              <span className="text-[10px] text-neutral-500">Live Database Synced</span>
+            </div>
+
+            {paymentHistory.length === 0 ? (
+              <div className="text-center py-8 text-neutral-500 text-xs">
+                No past transactions recorded yet. Click Upgrade to activate your VIP pass.
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {paymentHistory.map(tx => (
+                  <div
+                    key={tx.id}
+                    className="p-3 rounded-xl bg-black border border-white/5 flex items-center justify-between text-xs"
+                  >
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-bold text-amber-300 text-[11px]">{tx.receiptNumber}</span>
+                        <span className="text-white font-semibold">{tx.plan.toUpperCase()} PASS</span>
+                        <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-300 uppercase">
+                          {tx.status}
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-neutral-400 mt-0.5">
+                        {new Date(tx.createdAt).toLocaleDateString()} via {tx.provider.toUpperCase()} • {tx.details}
+                      </div>
+                    </div>
+
+                    <div className="text-right">
+                      <div className="font-bold text-white text-sm">${tx.amount.toFixed(2)}</div>
+                      <span className="text-[10px] text-emerald-400 font-mono">Verified DB</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
